@@ -1,0 +1,7 @@
+{
+  "name": "ES GISHOMA Management System",
+  "description": "A comprehensive school portal featuring public information pages, a dynamic announcement system, teacher profiles, a photo gallery, and a full-featured admin dashboard for content management.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
