@@ -6,6 +6,7 @@ import { MockDB, TrafficData } from '../../services/mockDb';
 import { DiagnosticResult } from '../../types';
 
 export default function Dashboard() {
+  const [isMounted, setIsMounted] = useState(false);
   const [stats, setStats] = useState({
     announcements: 0,
     staff: 0,
@@ -21,6 +22,7 @@ export default function Dashboard() {
   const [showDiagnosticModal, setShowDiagnosticModal] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const tData = MockDB.getTrafficStats();
     const msgStats = MockDB.getMessageStats();
     setTrafficStats(tData);
@@ -91,37 +93,39 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-        <div className="lg:col-span-2 bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
+        <div className="lg:col-span-2 bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100 min-w-0">
           <div className="flex items-center justify-between mb-10">
             <div>
               <h3 className="text-2xl font-bold text-slate-900">Traffic Distribution</h3>
               <p className="text-sm text-slate-500 mt-1">Aggregated page views across public endpoints</p>
             </div>
           </div>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trafficStats?.dailyTrends}>
-                <defs>
-                  <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="date" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} 
-                  dy={10} 
-                />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
-                />
-                <Area type="monotone" dataKey="views" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorViews)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="h-80 min-h-[320px] w-full min-w-0">
+            {isMounted && (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={trafficStats?.dailyTrends}>
+                  <defs>
+                    <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis 
+                    dataKey="date" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} 
+                    dy={10} 
+                  />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
+                  />
+                  <Area type="monotone" dataKey="views" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorViews)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -175,21 +179,23 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
+        <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100 min-w-0">
            <div className="flex items-center space-x-3 mb-8">
               <MousePointer2 className="w-5 h-5 text-indigo-600" />
               <h3 className="text-xl font-bold text-slate-900">Page Popularity Index</h3>
             </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={pageViewData} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 11, fontWeight: 700 }} />
-                  <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px' }} />
-                  <Bar dataKey="views" fill="#4f46e5" radius={[0, 4, 4, 0]} barSize={20} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="h-72 min-h-[280px] w-full min-w-0">
+              {isMounted && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={pageViewData} layout="vertical" margin={{ left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                    <XAxis type="number" hide />
+                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 11, fontWeight: 700 }} />
+                    <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px' }} />
+                    <Bar dataKey="views" fill="#4f46e5" radius={[0, 4, 4, 0]} barSize={20} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
         </div>
 
