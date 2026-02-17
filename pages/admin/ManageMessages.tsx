@@ -109,8 +109,8 @@ export default function ManageMessages() {
   const stats = MockDB.getMessageStats();
 
   return (
-    <div className="animate-in fade-in duration-500 h-[calc(100vh-140px)] md:h-[calc(100vh-180px)] lg:h-[calc(100vh-140px)] flex flex-col">
-      <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+    <div className="animate-in fade-in duration-500 h-[calc(100vh-140px)] flex flex-col w-full overflow-hidden">
+      <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 shrink-0 px-1">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-1 flex items-center gap-3">
             Inquiries <span className="bg-indigo-600 text-white text-[10px] px-2 py-1 rounded-full">{stats.unread} New</span>
@@ -135,7 +135,7 @@ export default function ManageMessages() {
       <div className="flex-1 flex gap-0 lg:gap-6 overflow-hidden relative">
         {/* List Sidebar */}
         <div className={`w-full lg:w-1/3 bg-white rounded-[2rem] border border-slate-100 flex flex-col shadow-sm overflow-hidden ${selectedMsg ? 'hidden lg:flex' : 'flex'}`}>
-          <div className="p-4 sm:p-6 border-b border-slate-100">
+          <div className="p-4 sm:p-6 border-b border-slate-100 shrink-0">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
@@ -143,7 +143,7 @@ export default function ManageMessages() {
                 placeholder="Search inbox..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-50 font-medium text-xs transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-50 font-medium text-xs transition-all"
               />
             </div>
           </div>
@@ -154,33 +154,32 @@ export default function ManageMessages() {
                 onClick={() => handleSelectMessage(msg)}
                 className={`group p-4 sm:p-6 border-b border-slate-50 cursor-pointer transition-all flex items-start gap-4 relative ${
                   selectedMsg?.id === msg.id ? 'bg-indigo-50/50 border-l-4 border-l-indigo-600' : 'hover:bg-slate-50'
-                } ${msg.status === 'new' ? 'bg-white' : ''}`}
+                } ${msg.status === 'new' ? 'bg-white font-bold' : ''}`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shrink-0 ${
                   msg.status === 'new' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'
                 }`}>
                   <User className="w-5 h-5" />
                 </div>
-                <div className="flex-1 min-w-0 pr-10">
+                <div className="flex-1 min-w-0 pr-8">
                   <div className="flex justify-between items-center mb-1">
-                    <span className={`text-sm truncate ${msg.status === 'new' ? 'font-black text-slate-900' : 'font-bold text-slate-700'}`}>{msg.name}</span>
-                    <span className="text-[10px] text-slate-400 flex-shrink-0 ml-2">{new Date(msg.date).toLocaleDateString()}</span>
+                    <span className={`text-sm truncate pr-2 ${msg.status === 'new' ? 'font-black text-slate-900' : 'font-bold text-slate-700'}`}>{msg.name}</span>
+                    <span className="text-[10px] text-slate-400 flex-shrink-0">{new Date(msg.date).toLocaleDateString()}</span>
                   </div>
                   <p className={`text-xs mb-2 truncate ${msg.status === 'new' ? 'font-bold text-slate-800' : 'text-slate-500'}`}>{msg.subject}</p>
                   <div className="flex items-center gap-2">
                     {msg.status === 'replied' ? (
-                      <span className="text-[10px] text-emerald-600 font-black uppercase flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Replied</span>
+                      <span className="text-[10px] text-emerald-600 font-black uppercase flex items-center gap-1 shrink-0"><CheckCircle2 className="w-3 h-3" /> Replied</span>
                     ) : msg.status === 'new' ? (
-                      <span className="text-[10px] text-amber-600 font-black uppercase flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Unread</span>
+                      <span className="text-[10px] text-amber-600 font-black uppercase flex items-center gap-1 shrink-0"><AlertTriangle className="w-3 h-3" /> Unread</span>
                     ) : (
-                      <span className="text-[10px] text-slate-400 font-black uppercase flex items-center gap-1"><Clock className="w-3 h-3" /> Read</span>
+                      <span className="text-[10px] text-slate-400 font-black uppercase flex items-center gap-1 shrink-0"><Clock className="w-3 h-3" /> Read</span>
                     )}
                   </div>
                 </div>
-                {/* Delete Button always visible on mobile/tablets, hover on desktop */}
                 <button 
                   onClick={(e) => handleDelete(e, msg.id)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl opacity-60 lg:opacity-0 lg:group-hover:opacity-100 transition-all z-20"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all z-20"
                   title="Delete Inquiry"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -199,29 +198,30 @@ export default function ManageMessages() {
         {/* Message Content Area */}
         <div className={`flex-1 bg-white rounded-[2rem] border border-slate-100 shadow-sm flex flex-col overflow-hidden relative ${selectedMsg ? 'flex' : 'hidden lg:flex'}`}>
           {!selectedMsg ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-300">
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-300 p-8">
               <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
                 <MessageSquare className="w-10 h-10" />
               </div>
               <h3 className="text-xl font-bold">Select a message</h3>
+              <p className="text-sm mt-2 text-slate-400">View details and reply to inquiries.</p>
             </div>
           ) : (
             <>
               {/* Header */}
-              <div className="p-4 sm:p-8 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
-                <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
-                  <button onClick={() => setSelectedMsg(null)} className="lg:hidden p-2 text-slate-400 hover:text-slate-900">
+              <div className="p-4 sm:p-8 border-b border-slate-100 flex items-center justify-between bg-white shrink-0 sticky top-0 z-10 w-full">
+                <div className="flex items-center gap-3 sm:gap-4 overflow-hidden flex-1">
+                  <button onClick={() => setSelectedMsg(null)} className="lg:hidden p-2 text-slate-400 hover:text-slate-900 shrink-0">
                     <ChevronLeft className="w-6 h-6" />
                   </button>
-                  <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 items-center justify-center font-black flex-shrink-0">
+                  <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 items-center justify-center font-black flex-shrink-0 shrink-0">
                     {selectedMsg.name.charAt(0)}
                   </div>
-                  <div className="truncate">
-                    <h2 className="text-lg sm:text-xl font-black text-slate-900 truncate">{selectedMsg.subject}</h2>
-                    <p className="text-[10px] sm:text-xs text-slate-500 font-bold truncate">{selectedMsg.name} &lt;{selectedMsg.email}&gt;</p>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg sm:text-xl font-black text-slate-900 truncate pr-4">{selectedMsg.subject}</h2>
+                    <p className="text-[10px] sm:text-xs text-slate-500 font-bold truncate pr-4">{selectedMsg.name} &bull; {selectedMsg.email}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+                <div className="shrink-0 ml-2">
                   <button 
                     onClick={(e) => handleDelete(e, selectedMsg.id)} 
                     disabled={isDeleting}
@@ -234,35 +234,35 @@ export default function ManageMessages() {
               </div>
 
               {/* Thread Body */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-10 space-y-8 sm:space-y-10">
-                <div className="flex gap-3 sm:gap-4 max-w-[90%] sm:max-w-2xl">
-                  <div className="hidden sm:flex w-10 h-10 rounded-xl bg-slate-100 items-center justify-center text-slate-400 flex-shrink-0">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-10 space-y-12">
+                <div className="flex gap-4 max-w-[95%] sm:max-w-2xl">
+                  <div className="hidden sm:flex w-10 h-10 rounded-xl bg-slate-100 items-center justify-center text-slate-400 shrink-0">
                     <User className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
-                    <div className="bg-slate-50 p-4 sm:p-6 rounded-3xl rounded-tl-none border border-slate-100 relative shadow-sm">
-                      <p className="text-slate-700 leading-relaxed font-medium text-sm sm:text-base">{selectedMsg.message}</p>
+                    <div className="bg-slate-50 p-6 rounded-3xl rounded-tl-none border border-slate-100 relative shadow-sm">
+                      <p className="text-slate-700 leading-relaxed font-medium text-sm sm:text-base whitespace-pre-wrap">{selectedMsg.message}</p>
                       <span className="absolute -bottom-6 left-0 text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(selectedMsg.date).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
 
                 {selectedMsg.replies.map((rep) => (
-                  <div key={rep.id} className="flex gap-3 sm:gap-4 justify-end">
-                    <div className="max-w-[90%] sm:max-w-2xl">
-                      <div className="bg-indigo-600 p-4 sm:p-6 rounded-3xl rounded-tr-none text-white shadow-xl shadow-indigo-100 relative">
+                  <div key={rep.id} className="flex gap-4 justify-end">
+                    <div className="max-w-[95%] sm:max-w-2xl">
+                      <div className="bg-indigo-600 p-6 rounded-3xl rounded-tr-none text-white shadow-xl shadow-indigo-100 relative">
                         <div className="flex items-center gap-2 mb-2 text-indigo-200">
                           <ShieldCheck className="w-3 h-3" />
                           <span className="text-[10px] font-black uppercase tracking-widest">Official Response</span>
                         </div>
-                        <p className="leading-relaxed font-medium text-sm sm:text-base">{rep.text}</p>
+                        <p className="leading-relaxed font-medium text-sm sm:text-base whitespace-pre-wrap">{rep.text}</p>
                         <div className="absolute -bottom-6 right-0 flex flex-col items-end gap-1">
                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(rep.timestamp).toLocaleString()}</span>
                            <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Delivered</span>
                         </div>
                       </div>
                     </div>
-                    <div className="hidden sm:flex w-10 h-10 rounded-xl bg-indigo-100 items-center justify-center text-indigo-600 flex-shrink-0">
+                    <div className="hidden sm:flex w-10 h-10 rounded-xl bg-indigo-100 items-center justify-center text-indigo-600 shrink-0">
                       <ShieldCheck className="w-5 h-5" />
                     </div>
                   </div>
@@ -270,10 +270,10 @@ export default function ManageMessages() {
               </div>
 
               {/* Footer Reply Area */}
-              <div className="p-4 sm:p-8 bg-slate-50/50 border-t border-slate-100">
+              <div className="p-4 sm:p-8 bg-slate-50/50 border-t border-slate-100 shrink-0">
                 <form onSubmit={handleReply} className="relative bg-white p-3 sm:p-4 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-200 shadow-xl focus-within:ring-4 focus-within:ring-indigo-100 transition-all">
                   {statusMsg && (
-                    <div className={`absolute -top-10 left-0 right-0 p-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-2 animate-in slide-in-from-top-2 ${
+                    <div className={`absolute -top-12 left-4 right-4 p-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-2 animate-in slide-in-from-top-2 z-20 ${
                       statusMsg.type === 'success' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'
                     }`}>
                       {statusMsg.text}
@@ -284,7 +284,7 @@ export default function ManageMessages() {
                       type="button"
                       onClick={handleAISuggest}
                       disabled={isSuggesting}
-                      className="flex items-center justify-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all disabled:opacity-50"
+                      className="flex items-center justify-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all disabled:opacity-50 shrink-0"
                     >
                       {isSuggesting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                       AI Suggest
@@ -295,16 +295,16 @@ export default function ManageMessages() {
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     placeholder="Type your official response..."
-                    className="w-full p-2 sm:p-4 bg-transparent outline-none font-medium text-sm min-h-[60px] sm:min-h-[80px] resize-none"
+                    className="w-full p-2 sm:p-4 bg-transparent outline-none font-medium text-sm min-h-[80px] sm:min-h-[100px] resize-none"
                   ></textarea>
                   <div className="flex justify-end pt-2">
                     <button 
                       type="submit"
                       disabled={isSending || !replyText.trim()}
-                      className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:opacity-50"
+                      className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:opacity-50"
                     >
                       {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                      <span>Send</span>
+                      <span>Dispatch Response</span>
                     </button>
                   </div>
                 </form>

@@ -49,12 +49,12 @@ const Navbar: React.FC = () => {
   if (isAdminPath) return null;
 
   return (
-    <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2 group">
-              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl group-hover:bg-indigo-700 transition-colors">
+              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl group-hover:bg-indigo-700 transition-colors shrink-0">
                 EG
               </div>
               <div className="flex flex-col">
@@ -83,7 +83,7 @@ const Navbar: React.FC = () => {
           </div>
 
           <div className="md:hidden flex items-center">
-            <button onClick={() => setIsOpen(!isOpen)} className="text-slate-600 hover:text-indigo-600">
+            <button onClick={() => setIsOpen(!isOpen)} className="text-slate-600 hover:text-indigo-600 p-2">
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
@@ -131,7 +131,7 @@ const Footer: React.FC = () => {
   if (location.pathname.startsWith('/admin')) return null;
 
   return (
-    <footer className="bg-slate-900 text-white pt-16 pb-8">
+    <footer className="bg-slate-900 text-white pt-16 pb-8 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div className="space-y-4">
@@ -204,6 +204,8 @@ const AdminSidebar: React.FC<{ isOpen: boolean; toggle: () => void }> = ({ isOpe
 
   const handleLogout = () => {
     localStorage.removeItem('isAdmin');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
     navigate('/login');
   };
 
@@ -218,16 +220,16 @@ const AdminSidebar: React.FC<{ isOpen: boolean; toggle: () => void }> = ({ isOpe
       )}
       
       <div className={`w-64 bg-slate-900 min-h-screen text-white flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-8 border-b border-slate-800 flex items-center justify-between">
+        <div className="p-8 border-b border-slate-800 flex items-center justify-between shrink-0">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center font-bold text-white">EG</div>
-            <span className="font-bold tracking-tight text-white brand-font">ADMIN PORTAL</span>
+            <div className="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center font-bold text-white shrink-0">EG</div>
+            <span className="font-bold tracking-tight text-white brand-font">ADMIN</span>
           </Link>
-          <button onClick={toggle} className="lg:hidden text-slate-400 hover:text-white">
+          <button onClick={toggle} className="lg:hidden text-slate-400 hover:text-white p-1">
             <X className="w-6 h-6" />
           </button>
         </div>
-        <nav className="flex-1 p-4 space-y-2 mt-4">
+        <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto">
           {menuItems.map((item) => (
             <Link 
               key={item.path}
@@ -237,17 +239,17 @@ const AdminSidebar: React.FC<{ isOpen: boolean; toggle: () => void }> = ({ isOpe
                 location.pathname === item.path ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              <item.icon className="w-5 h-5" />
-              <span className="font-medium">{item.name}</span>
+              <item.icon className="w-5 h-5 shrink-0" />
+              <span className="font-medium whitespace-nowrap">{item.name}</span>
             </Link>
           ))}
         </nav>
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-slate-800 shrink-0">
           <button 
             onClick={handleLogout}
             className="flex items-center space-x-3 w-full p-3 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
           >
-            <LogOut className="w-5 h-5" />
+            <LogOut className="w-5 h-5 shrink-0" />
             <span className="font-medium">Sign Out</span>
           </button>
         </div>
@@ -269,7 +271,7 @@ export default function App() {
       <div className="flex flex-col min-h-screen">
         <TrafficTracker />
         <Navbar />
-        <main className="flex-1">
+        <main className="flex-1 flex flex-col">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
@@ -282,14 +284,14 @@ export default function App() {
             {/* Admin Routes */}
             <Route path="/admin/*" element={
               <ProtectedRoute>
-                <div className="flex bg-slate-50 min-h-screen relative">
+                <div className="flex bg-slate-50 min-h-screen relative w-full">
                   <AdminSidebar 
                     isOpen={isAdminSidebarOpen} 
                     toggle={() => setIsAdminSidebarOpen(!isAdminSidebarOpen)} 
                   />
-                  <div className="flex-1 lg:ml-64 flex flex-col w-full">
+                  <div className="flex-1 lg:ml-64 flex flex-col w-full overflow-hidden">
                     {/* Admin Mobile Header */}
-                    <header className="lg:hidden bg-white border-b border-slate-200 h-16 flex items-center px-4 shrink-0">
+                    <header className="lg:hidden bg-white border-b border-slate-200 h-16 flex items-center px-4 shrink-0 w-full sticky top-0 z-40">
                       <button 
                         onClick={() => setIsAdminSidebarOpen(true)}
                         className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg"
@@ -298,13 +300,14 @@ export default function App() {
                       </button>
                       <span className="ml-4 font-bold text-slate-900">Admin Portal</span>
                     </header>
-                    <div className="p-4 sm:p-6 lg:p-10 flex-1 overflow-x-hidden">
+                    <div className="p-4 sm:p-6 lg:p-10 flex-1 overflow-x-hidden w-full">
                       <Routes>
                         <Route path="dashboard" element={<Dashboard />} />
                         <Route path="messages" element={<ManageMessages />} />
                         <Route path="announcements" element={<ManageAnnouncements />} />
                         <Route path="staff" element={<ManageStaff />} />
                         <Route path="gallery" element={<ManageGallery />} />
+                        <Route path="*" element={<Navigate to="dashboard" />} />
                       </Routes>
                     </div>
                   </div>

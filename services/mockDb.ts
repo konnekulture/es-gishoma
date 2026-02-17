@@ -9,10 +9,53 @@ export interface TrafficData {
   activeVisitors: number;
 }
 
-const INITIAL_ANNOUNCEMENTS: Announcement[] = [];
-const INITIAL_STAFF: Staff[] = [];
-const INITIAL_GALLERY: GalleryItem[] = [];
-const INITIAL_MESSAGES: ContactMessage[] = [];
+const INITIAL_ANNOUNCEMENTS: Announcement[] = [
+  {
+    id: '1',
+    title: 'Annual Science Excellence Fair 2024',
+    content: 'Join us for a showcase of innovation and scientific discovery. Our students have been working tirelessly on projects ranging from renewable energy to robotics. Special guest speakers from the National University will be present.',
+    date: '2024-05-15',
+    image: 'https://images.unsplash.com/photo-1564325724739-bae0bd08762c?auto=format&fit=crop&q=80&w=800',
+    category: 'Event',
+    isFeatured: true
+  },
+  {
+    id: '2',
+    title: 'New Library Wing Inauguration',
+    content: 'We are proud to announce the opening of our state-of-the-art library facility, featuring over 50,000 digital resources and collaborative study spaces designed for the 21st-century learner.',
+    date: '2024-06-01',
+    image: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&q=80&w=800',
+    category: 'Academic',
+    isFeatured: true
+  }
+];
+
+const INITIAL_STAFF: Staff[] = [
+  {
+    id: 's1',
+    name: 'Dr. Sarah Johnson',
+    role: 'Principal',
+    bio: 'With over 20 years in educational leadership, Dr. Johnson is committed to fostering an environment of academic rigour and emotional intelligence.',
+    image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=400',
+    department: 'Administration',
+    email: 'principal@esgishoma.edu'
+  },
+  {
+    id: 's2',
+    name: 'Prof. David Okoro',
+    role: 'Head of Science',
+    bio: 'A passionate educator dedicated to making complex physical concepts accessible and exciting for every student.',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
+    department: 'Science',
+    email: 'd.okoro@esgishoma.edu'
+  }
+];
+
+const INITIAL_GALLERY: GalleryItem[] = [
+  { id: 'g1', url: 'https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800', caption: 'Main Campus Entrance', category: 'Campus', isFeatured: true },
+  { id: 'g2', url: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800', caption: 'Chemistry Laboratory', category: 'Facilities', isFeatured: true },
+  { id: 'g3', url: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=800', caption: 'Student Graduation Ceremony', category: 'Events', isFeatured: true }
+];
 
 // Seeded Admin Credentials
 const SEEDED_ADMIN_HASH = '3391783f984a926f437c95e63d3f9b2f2c84293f77344933a39281a17951558c';
@@ -28,21 +71,18 @@ export class MockDB {
   private static getStore(key: string, initial: any) {
     try {
       const data = localStorage.getItem(key);
-      if (!data) return initial;
-      const parsed = JSON.parse(data);
-      return parsed || initial;
+      if (!data) {
+        this.setStore(key, initial);
+        return initial;
+      }
+      return JSON.parse(data);
     } catch (e) {
-      console.error(`Store corruption detected for key: ${key}. Resetting.`);
       return initial;
     }
   }
 
   static setStore(key: string, data: any) {
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch (e) {
-      console.error(`Failed to write to storage: ${key}`, e);
-    }
+    localStorage.setItem(key, JSON.stringify(data));
   }
 
   private static async hashPassword(password: string): Promise<string> {
@@ -52,229 +92,150 @@ export class MockDB {
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     } catch (e) {
-      return 'm-' + password.length; // Fallback
+      return 'm-' + password.length;
     }
   }
 
   static async seedAdmin() {
     const users = this.getStore('users', []);
-    const adminIndex = users.findIndex((u: any) => String(u.username) === 'admin');
-    if (adminIndex > -1) {
-      users[adminIndex] = { ...users[adminIndex], ...SEEDED_ADMIN };
-    } else {
+    if (!users.some((u: any) => u.username === 'admin')) {
       users.push(SEEDED_ADMIN);
+      this.setStore('users', users);
     }
-    this.setStore('users', users);
   }
 
   static async login(username: string, password: string, honeypot?: string): Promise<{ token: string; user: User } | null> {
     await this.seedAdmin();
-    
-    // 1. HONEYPOT CHECK (Bot Trap)
-    if (honeypot) {
-      console.warn("Honeypot triggered. Bot detected.");
-      await new Promise(r => setTimeout(r, 5000)); // Heavy penalty
-      return null; 
-    }
-
-    // 2. RATE LIMITING & LOCKOUT CHECK
+    if (honeypot) { await new Promise(r => setTimeout(r, 2000)); return null; }
     const security = this.getStore('login_security', { attempts: 0, lockoutUntil: 0 });
     const now = Date.now();
-
-    if (security.lockoutUntil > now) {
-      const remaining = Math.ceil((security.lockoutUntil - now) / 60000);
-      throw new Error(`Account temporarily locked. Try again in ${remaining} minute(s).`);
-    }
-
-    // 3. ARTIFICIAL LATENCY (Prevents timing attacks and fast brute-forcing)
-    await new Promise(r => setTimeout(r, 1000 + Math.random() * 1000));
-
+    if (security.lockoutUntil > now) throw new Error(`Account locked. Try again in ${Math.ceil((security.lockoutUntil - now) / 60000)}m.`);
+    
+    await new Promise(r => setTimeout(r, 800));
     const users = this.getStore('users', []);
-    const user = users.find((u: any) => String(u.username) === String(username));
+    const user = users.find((u: any) => u.username === username);
     const inputHash = await this.hashPassword(password);
     
-    // Check credentials
     const isValid = user && (inputHash === user.passwordHash || (username === 'admin' && password === 'school2026'));
 
     if (isValid) {
-      // Success: Clear security logs
       this.setStore('login_security', { attempts: 0, lockoutUntil: 0 });
-      
-      const token = btoa(JSON.stringify({ 
-        id: user.id, 
-        username: user.username, 
-        role: user.role, 
-        exp: Date.now() + 3600000,
-        iat: Date.now()
-      }));
-      
-      return {
-        token,
-        user: { id: user.id, name: user.name, email: user.username + '@esgishoma.edu', role: user.role }
-      };
+      const token = btoa(JSON.stringify({ id: user.id, username: user.username, role: user.role, exp: Date.now() + 3600000 }));
+      return { token, user: { id: user.id, name: user.name, email: user.username + '@esgishoma.edu', role: user.role } };
     } else {
-      // Failure: Increment attempts and handle lockout
       const newAttempts = security.attempts + 1;
-      let lockoutUntil = 0;
-      
-      if (newAttempts >= 5) {
-        lockoutUntil = now + (15 * 60 * 1000); // 15 minute lockout after 5 attempts
-      }
-      
-      this.setStore('login_security', { attempts: newAttempts, lockoutUntil });
-      
-      // Never reveal which part of the credentials was wrong
+      this.setStore('login_security', { attempts: newAttempts, lockoutUntil: newAttempts >= 5 ? now + 900000 : 0 });
       return null;
     }
   }
 
   static checkAdminAuth() {
     const token = localStorage.getItem('adminToken');
-    if (!token) throw new Error('Unauthorized: Authentication session missing.');
+    if (!token) throw new Error('Authentication required.');
     try {
       const decoded = JSON.parse(atob(token));
-      if (decoded.role !== 'admin' || decoded.exp < Date.now()) {
-        throw new Error('Unauthorized: Admin session expired.');
-      }
+      if (decoded.exp < Date.now()) throw new Error('Session expired.');
     } catch (e) {
-      throw new Error('Unauthorized: Invalid security context.');
+      throw new Error('Invalid session.');
     }
   }
 
-  private static softDelete(key: string, id: string) {
-    this.checkAdminAuth();
-    const items = this.getStore(key, []);
-    const index = items.findIndex((i: any) => String(i.id) === String(id));
-    if (index !== -1) {
-      items[index].deletedAt = new Date().toISOString();
-      this.setStore(key, items);
-    }
-  }
-
-  private static restore(key: string, id: string) {
-    this.checkAdminAuth();
-    const items = this.getStore(key, []);
-    const index = items.findIndex((i: any) => String(i.id) === String(id));
-    if (index !== -1) {
-      items[index].deletedAt = null;
-      this.setStore(key, items);
-    }
-  }
-
-  private static permanentDelete(key: string, id: string) {
-    this.checkAdminAuth();
-    const items = this.getStore(key, []);
-    const filtered = items.filter((i: any) => String(i.id).trim() !== String(id).trim());
-    this.setStore(key, filtered);
-  }
-
-  // --- Announcements ---
   static getAnnouncements(includeDeleted = false): Announcement[] {
     const items = this.getStore('announcements', INITIAL_ANNOUNCEMENTS);
-    return includeDeleted ? items : items.filter((a: Announcement) => !a.deletedAt);
+    return includeDeleted ? items : items.filter((a: any) => !a.deletedAt);
   }
 
   static async saveAnnouncement(ann: Announcement) {
     this.checkAdminAuth();
     const anns = this.getAnnouncements(true);
-    const index = anns.findIndex(a => String(a.id) === String(ann.id));
+    const index = anns.findIndex(a => a.id === ann.id);
     if (index > -1) anns[index] = { ...ann, deletedAt: null };
     else anns.push(ann);
     this.setStore('announcements', anns);
   }
 
   static async deleteAnnouncement(id: string) {
-    this.softDelete('announcements', id);
+    this.checkAdminAuth();
+    const anns = this.getAnnouncements(true);
+    const index = anns.findIndex(a => a.id === id);
+    if (index > -1) {
+      anns[index].deletedAt = new Date().toISOString();
+      this.setStore('announcements', anns);
+    }
   }
 
-  static async restoreAnnouncement(id: string) {
-    this.restore('announcements', id);
-  }
-
-  static async permanentDeleteAnnouncement(id: string) {
-    this.permanentDelete('announcements', id);
-  }
-
-  // --- Staff ---
   static getStaff(includeDeleted = false): Staff[] {
     const items = this.getStore('staff', INITIAL_STAFF);
-    return includeDeleted ? items : items.filter((s: Staff) => !s.deletedAt);
+    return includeDeleted ? items : items.filter((s: any) => !s.deletedAt);
   }
 
   static async saveStaff(member: Staff) {
     this.checkAdminAuth();
     const staff = this.getStaff(true);
-    const index = staff.findIndex(s => String(s.id) === String(member.id));
+    const index = staff.findIndex(s => s.id === member.id);
     if (index > -1) staff[index] = { ...member, deletedAt: null };
     else staff.push(member);
     this.setStore('staff', staff);
   }
 
   static async deleteStaff(id: string) {
-    this.softDelete('staff', id);
+    this.checkAdminAuth();
+    const staff = this.getStaff(true);
+    const index = staff.findIndex(s => s.id === id);
+    if (index > -1) {
+      staff[index].deletedAt = new Date().toISOString();
+      this.setStore('staff', staff);
+    }
   }
 
-  static async restoreStaff(id: string) {
-    this.restore('staff', id);
-  }
-
-  static async permanentDeleteStaff(id: string) {
-    this.permanentDelete('staff', id);
-  }
-
-  // --- Gallery ---
   static getGallery(includeDeleted = false): GalleryItem[] {
     const items = this.getStore('gallery', INITIAL_GALLERY);
-    return includeDeleted ? items : items.filter((g: GalleryItem) => !g.deletedAt);
+    return includeDeleted ? items : items.filter((g: any) => !g.deletedAt);
   }
 
   static async saveGalleryItem(item: GalleryItem) {
     this.checkAdminAuth();
     const gallery = this.getGallery(true);
-    const index = gallery.findIndex(g => String(g.id) === String(item.id));
+    const index = gallery.findIndex(g => g.id === item.id);
     if (index > -1) gallery[index] = { ...item, deletedAt: null };
     else gallery.push(item);
     this.setStore('gallery', gallery);
   }
 
   static async deleteGalleryItem(id: string) {
-    this.softDelete('gallery', id);
+    this.checkAdminAuth();
+    const gallery = this.getGallery(true);
+    const index = gallery.findIndex(g => g.id === id);
+    if (index > -1) {
+      gallery[index].deletedAt = new Date().toISOString();
+      this.setStore('gallery', gallery);
+    }
   }
 
-  static async restoreGalleryItem(id: string) {
-    this.restore('gallery', id);
-  }
-
-  static async permanentDeleteGalleryItem(id: string) {
-    this.permanentDelete('gallery', id);
-  }
-
-  // --- Inquiries ---
   static getMessages(includeDeleted = false): ContactMessage[] {
-    const items = this.getStore('contact_messages', INITIAL_MESSAGES);
-    return includeDeleted ? items : items.filter((m: ContactMessage) => !m.deletedAt);
+    const items = this.getStore('contact_messages', []);
+    return includeDeleted ? items : items.filter((m: any) => !m.deletedAt);
   }
 
   static async saveMessage(msg: Partial<ContactMessage>) {
     const messages = this.getMessages(true);
-    const newMessage: ContactMessage = {
+    messages.push({
       id: Date.now().toString(),
       name: msg.name || '',
       email: msg.email || '',
       subject: msg.subject || '',
       message: msg.message || '',
-      date: msg.date || new Date().toISOString(),
+      date: new Date().toISOString(),
       status: 'new',
       replies: []
-    };
-    messages.push(newMessage);
+    });
     this.setStore('contact_messages', messages);
   }
 
   static async markAsRead(id: string) {
     this.checkAdminAuth();
     const messages = this.getMessages(true);
-    const index = messages.findIndex(m => String(m.id) === String(id));
+    const index = messages.findIndex(m => m.id === id);
     if (index > -1 && messages[index].status === 'new') {
       messages[index].status = 'read';
       this.setStore('contact_messages', messages);
@@ -284,18 +245,15 @@ export class MockDB {
   static async replyToMessage(id: string, text: string) {
     this.checkAdminAuth();
     const messages = this.getMessages(true);
-    const index = messages.findIndex(m => String(m.id) === String(id));
+    const index = messages.findIndex(m => m.id === id);
     if (index > -1) {
-      const adminStr = localStorage.getItem('adminUser');
-      const admin = adminStr ? JSON.parse(adminStr) : {};
-      const reply: ChatReply = {
+      messages[index].replies.push({
         id: Date.now().toString(),
-        adminName: admin.name || 'Administrator',
+        adminName: 'Administrator',
         text,
         timestamp: new Date().toISOString(),
         deliveryStatus: 'delivered'
-      };
-      messages[index].replies.push(reply);
+      });
       messages[index].status = 'replied';
       this.setStore('contact_messages', messages);
     }
@@ -303,7 +261,9 @@ export class MockDB {
 
   static async deleteMessage(id: string) {
     this.checkAdminAuth();
-    this.permanentDelete('contact_messages', id);
+    const messages = this.getMessages(true);
+    const filtered = messages.filter(m => m.id !== id);
+    this.setStore('contact_messages', filtered);
   }
 
   static getMessageStats() {
@@ -326,42 +286,31 @@ export class MockDB {
   }
 
   static trackPageView(path: string) {
-    const data = this.getStore('traffic_stats', {
-      totalVisitors: 0,
-      pageViews: {},
-      dailyTrends: [],
-      activeVisitors: 0
-    });
+    const data = this.getStore('traffic_stats', { totalVisitors: 0, pageViews: {}, dailyTrends: [], activeVisitors: 0 });
     data.totalVisitors++;
     data.pageViews[path] = (data.pageViews[path] || 0) + 1;
     const today = new Date().toISOString().split('T')[0];
-    const trendIndex = data.dailyTrends.findIndex((t: any) => String(t.date) === String(today));
-    if (trendIndex > -1) {
-      data.dailyTrends[trendIndex].views++;
-    } else {
+    const trend = data.dailyTrends.find((t: any) => t.date === today);
+    if (trend) trend.views++;
+    else {
       data.dailyTrends.push({ date: today, views: 1 });
-      if (data.dailyTrends.length > 30) data.dailyTrends.shift();
+      if (data.dailyTrends.length > 14) data.dailyTrends.shift();
     }
-    data.activeVisitors = Math.floor(Math.random() * 50) + 10;
+    data.activeVisitors = Math.floor(Math.random() * 20) + 5;
     this.setStore('traffic_stats', data);
   }
 
   static getTrafficStats(): TrafficData {
-    return this.getStore('traffic_stats', {
-      totalVisitors: 0,
-      pageViews: {},
-      dailyTrends: [],
-      activeVisitors: 0
-    });
+    return this.getStore('traffic_stats', { totalVisitors: 0, pageViews: {}, dailyTrends: [], activeVisitors: 0 });
   }
 
   static async getSystemDiagnostics(): Promise<DiagnosticResult[]> {
     this.checkAdminAuth();
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 1000));
     return [
-      { id: '1', label: 'Primary Node', value: 'Active', status: 'ok', description: 'Main communication cluster is operational.' },
-      { id: '2', label: 'DB Latency', value: '14ms', status: 'ok', description: 'Data storage response time is healthy.' },
-      { id: '3', label: 'MX Lookup', value: 'Verified', status: 'ok', description: 'Email routing services are healthy.' }
+      { id: '1', label: 'Storage Engine', value: 'Optimal', status: 'ok', description: 'Local persistent storage is accessible.' },
+      { id: '2', label: 'Auth Handshake', value: 'Secure', status: 'ok', description: 'JWT simulation layers are healthy.' },
+      { id: '3', label: 'Resource Load', value: '12%', status: 'ok', description: 'Low impact on browser memory footprint.' }
     ];
   }
 
@@ -370,11 +319,8 @@ export class MockDB {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Draft a professional response to this inquiry: "${text}"`,
-      config: {
-        systemInstruction: "You are a professional school administrator. Keep your response formal and helpful."
-      }
+      contents: `Draft a formal, short professional school administrative reply to this: "${text}"`,
     });
-    return response.text || "Thank you for your inquiry.";
+    return response.text || "Thank you for reaching out.";
   }
 }

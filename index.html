@@ -12,7 +12,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   
   <!-- Google Fonts - Cached by SW after first load -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
   
   <script>
     tailwind.config = {
@@ -23,7 +25,7 @@
             serif: ['Playfair Display', 'serif'],
           },
           colors: {
-            indigo: { 50: '#eef2ff', 100: '#e0e7ff', 600: '#4f46e5', 700: '#4338ca' },
+            indigo: { 50: '#eef2ff', 100: '#e0e7ff', 600: '#4f46e5', 700: '#4338ca', 900: '#1e1b4b' },
             slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 900: '#0f172a' }
           },
         },
@@ -32,27 +34,26 @@
   </script>
 
   <style>
-    /* CRITICAL CSS FALLBACK: Handles layout when Tailwind is offline */
+    /* CRITICAL CSS FALLBACK: Ensures page structure is visible even offline */
     :root { --indigo-600: #4f46e5; --slate-900: #0f172a; --slate-50: #f8fafc; }
-    body { margin: 0; font-family: sans-serif; background-color: var(--slate-50); color: var(--slate-900); }
-    #root { display: flex; flex-direction: column; min-height: 100vh; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: var(--slate-50); color: var(--slate-900); line-height: 1.5; }
+    #root { display: flex; flex-direction: column; min-height: 100vh; position: relative; }
+    .brand-font { font-family: 'Playfair Display', serif; }
     
-    /* Offline Structural Helpers */
-    .flex { display: flex; }
-    .flex-col { flex-direction: column; }
-    .hidden { display: none; }
-    .max-w-7xl { max-width: 80rem; margin-left: auto; margin-right: auto; padding-left: 1rem; padding-right: 1rem; }
-    
-    /* Navbar/Footer placeholders to keep content "organized" */
-    nav { background: white; border-bottom: 1px solid #e2e8f0; height: 5rem; width: 100%; display: flex; align-items: center; }
+    /* Layout placeholders */
+    nav { background: white; border-bottom: 1px solid #e2e8f0; height: 5rem; width: 100%; position: sticky; top: 0; z-index: 50; }
     footer { background: var(--slate-900); color: white; padding: 4rem 1rem; margin-top: auto; }
     
-    /* Loader UI */
+    /* Splash Screen Loader */
     #root:empty::after {
-      content: "Initializing Application...";
+      content: "ES GISHOMA";
       position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      font-weight: 600; color: #64748b; font-size: 14px;
+      font-weight: 900; color: var(--indigo-600); font-size: 24px; letter-spacing: 0.2em;
+      font-family: 'Playfair Display', serif;
+      animation: pulse 2s infinite ease-in-out;
     }
+    @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
   </style>
 
 <script type="importmap">
@@ -72,7 +73,7 @@
 }
 </script>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-slate-50 text-slate-900 overflow-x-hidden">
   <div id="root"></div>
   <script type="module" src="index.tsx"></script>
 </body>
