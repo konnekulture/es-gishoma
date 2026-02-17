@@ -24,8 +24,10 @@ export default function ManageGallery() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    setItems(MockDB.getGallery());
+  const loadData = async () => {
+    // FIX: getGallery is async and returns a promise.
+    const galleryData = await MockDB.getGallery();
+    setItems(galleryData);
   };
 
   const resetForm = () => {
@@ -72,7 +74,7 @@ export default function ManageGallery() {
         isFeatured
       };
       await MockDB.saveGalleryItem(newItem);
-      loadData();
+      await loadData();
       setIsModalOpen(false);
       resetForm();
     } catch (err) {
@@ -92,7 +94,7 @@ export default function ManageGallery() {
     setIsProcessing(true);
     try {
       await MockDB.deleteGalleryItem(deletingId);
-      loadData();
+      await loadData();
       setIsDeleteModalOpen(false);
       setDeletingId(null);
     } catch (err) {

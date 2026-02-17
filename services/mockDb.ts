@@ -1,6 +1,7 @@
 
-import { Announcement, Staff, GalleryItem, HomeConfig, DiagnosticResult, ContactMessage, ChatReply, User } from '../types';
+import { Announcement, Staff, GalleryItem, HomeConfig, DiagnosticResult, ContactMessage, ChatReply, User, Book } from '../types';
 import { GoogleGenAI } from "@google/genai";
+import { FileStore } from './fileStore';
 
 export interface TrafficData {
   totalVisitors: number;
@@ -57,7 +58,25 @@ const INITIAL_GALLERY: GalleryItem[] = [
   { id: 'g3', url: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=800', caption: 'Student Graduation Ceremony', category: 'Events', isFeatured: true }
 ];
 
-// Seeded Admin Credentials
+const INITIAL_BOOKS: Book[] = [
+  {
+    id: 'b1',
+    title: 'Advanced Physics Handbook',
+    category: 'Sciences',
+    fileName: 'physics_adv.pdf',
+    fileUrl: 'data:application/pdf;base64,JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL1BhZ2VzL0NvdW50IDEvS2lkc1szIDAgUl0+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA2MTIgNzkyXS9SZXNvdXJjZXM8PC9Gb250PDwvRjEgNCAwIFI+Pj4+L0NvbnRlbnRzIDUgMCBSPj4KZW5kb2JqCjQgMCBvYmoKPDwvVHlwZS9Gb250L1N1YnR5cGUvVHlwZTEvQmFzZUZvbnQvSGVsdmV0aWNhPj4KZW5kb2JqCjUgMCBvYmoKPDwvTGVuZ3RoIDQ0Pj5zdHJlYW0KQlQKL0YxIDI0IFRmCjcwIDcwMCBUZAooUGh5c2ljcyBIYW5kYm9vaykgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgNgowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTUgMDAwMDAgbiAKMDAwMDAwMDA2MCAwMDAwMCBuIAowMDAwMDAwMTEyIDAwMDAwIG4gCjAwMDAwMDAyMzEgMDAwMDAgbiAKMDAwMDAwMDI4MiAwMDAwMCBuIAp0cmFpbGVyCjw8L1NpemUgNi9Sb290IDEgMCBSPj4Kc3RhcnR4cmVmCjM3NQolJUVPRg==',
+    description: 'A comprehensive guide to mechanics and thermodynamics.'
+  },
+  {
+    id: 'b2',
+    title: 'Web Development Foundations',
+    category: 'ICT',
+    fileName: 'web_dev.pdf',
+    fileUrl: 'data:application/pdf;base64,JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL1BhZ2VzL0NvdW50IDEvS2lkc1szIDAgUl0+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA2MTIgNzkyXS9SZXNvdXJjZXM8PC9Gb250PDwvRjEgNCAwIFI+Pj4+L0NvbnRlbnRzIDUgMCBSPj4KZW5kb2JqCjQgMCBvYmoKPDwvVHlwZS9Gb250L1N1YnR5cGUvVHlwZTEvQmFzZUZvbnQvSGVsdmV0aWNhPj4KZW5kb2JqCjUgMCBvYmoKPDwvTGVuZ3RoIDQ4Pj5zdHJlYW0KQlQKL0YxIDI0IFRmCjcwIDcwMCBUZAooV2ViIERldmVsb3BtZW50KSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxNSAwMDAwMCBuIAowMDAwMDAwMDYwIDAwMDAwIG4gCjAwMDAwMDAxMTIgMDAwMDAgbiAKMDAwMDAwMDIzMSAwMDAwMCBuIAowMDAwMDAwMjgyIDAwMDAwIG4gCnRyYWlsZXIKPDwvU2l6ZSA2L1Jvb3QgMSAwIFI+PgpzdGFydHhyZWYKMzc5CiUlRU9G',
+    description: 'Introduction to HTML, CSS, and JavaScript.'
+  }
+];
+
 const SEEDED_ADMIN_HASH = '3391783f984a926f437c95e63d3f9b2f2c84293f77344933a39281a17951558c';
 const SEEDED_ADMIN = {
   id: 'admin_1',
@@ -71,11 +90,12 @@ export class MockDB {
   private static getStore(key: string, initial: any) {
     try {
       const data = localStorage.getItem(key);
-      if (!data) {
+      if (data === null || data === undefined) {
         this.setStore(key, initial);
         return initial;
       }
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      return parsed && Array.isArray(parsed) && parsed.length === 0 && initial.length > 0 ? initial : (parsed || initial);
     } catch (e) {
       return initial;
     }
@@ -86,14 +106,10 @@ export class MockDB {
   }
 
   private static async hashPassword(password: string): Promise<string> {
-    try {
-      const msgUint8 = new TextEncoder().encode(password);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    } catch (e) {
-      return 'm-' + password.length;
-    }
+    const msgUint8 = new TextEncoder().encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   static async seedAdmin() {
@@ -188,15 +204,28 @@ export class MockDB {
     }
   }
 
-  static getGallery(includeDeleted = false): GalleryItem[] {
+  static async getGallery(includeDeleted = false): Promise<GalleryItem[]> {
     const items = this.getStore('gallery', INITIAL_GALLERY);
-    return includeDeleted ? items : items.filter((g: any) => !g.deletedAt);
+    const list = includeDeleted ? items : items.filter((g: any) => !g.deletedAt);
+    
+    // Attempt to load full binary data from FileStore if it exists
+    for (let item of list) {
+      const stored = await FileStore.getFile(item.id);
+      if (stored) item.url = stored;
+    }
+    return list;
   }
 
   static async saveGalleryItem(item: GalleryItem) {
     this.checkAdminAuth();
-    const gallery = this.getGallery(true);
-    const index = gallery.findIndex(g => g.id === item.id);
+    // Save large binary data to IndexedDB
+    if (item.url.startsWith('data:')) {
+      await FileStore.saveFile(item.id, item.url);
+      item.url = 'stored'; // Metadata flag
+    }
+    
+    const gallery = this.getStore('gallery', INITIAL_GALLERY);
+    const index = gallery.findIndex((g: any) => g.id === item.id);
     if (index > -1) gallery[index] = { ...item, deletedAt: null };
     else gallery.push(item);
     this.setStore('gallery', gallery);
@@ -204,11 +233,50 @@ export class MockDB {
 
   static async deleteGalleryItem(id: string) {
     this.checkAdminAuth();
-    const gallery = this.getGallery(true);
-    const index = gallery.findIndex(g => g.id === id);
+    const gallery = this.getStore('gallery', INITIAL_GALLERY);
+    const index = gallery.findIndex((g: any) => g.id === id);
     if (index > -1) {
       gallery[index].deletedAt = new Date().toISOString();
       this.setStore('gallery', gallery);
+      await FileStore.deleteFile(id);
+    }
+  }
+
+  static async getBooks(includeDeleted = false): Promise<Book[]> {
+    const items = this.getStore('curriculum_books', INITIAL_BOOKS);
+    const list = includeDeleted ? items : items.filter((b: any) => !b.deletedAt);
+    
+    for (let book of list) {
+      const stored = await FileStore.getFile(book.id);
+      if (stored) book.fileUrl = stored;
+    }
+    return list;
+  }
+
+  static async saveBook(book: Book) {
+    this.checkAdminAuth();
+    
+    // Migrate PDF data to IndexedDB
+    if (book.fileUrl && book.fileUrl.startsWith('data:application/pdf')) {
+      await FileStore.saveFile(book.id, book.fileUrl);
+      book.fileUrl = 'stored'; // Placeholder in metadata
+    }
+
+    const books = this.getStore('curriculum_books', INITIAL_BOOKS);
+    const index = books.findIndex((b: any) => b.id === book.id);
+    if (index > -1) books[index] = { ...book, deletedAt: null };
+    else books.push(book);
+    this.setStore('curriculum_books', books);
+  }
+
+  static async deleteBook(id: string) {
+    this.checkAdminAuth();
+    const books = this.getStore('curriculum_books', INITIAL_BOOKS);
+    const index = books.findIndex((b: any) => b.id === id);
+    if (index > -1) {
+      books[index].deletedAt = new Date().toISOString();
+      this.setStore('curriculum_books', books);
+      await FileStore.deleteFile(id);
     }
   }
 
@@ -308,7 +376,7 @@ export class MockDB {
     this.checkAdminAuth();
     await new Promise(r => setTimeout(r, 1000));
     return [
-      { id: '1', label: 'Storage Engine', value: 'Optimal', status: 'ok', description: 'Local persistent storage is accessible.' },
+      { id: '1', label: 'Storage Engine', value: 'Optimal', status: 'ok', description: 'IndexedDB enabled for large assets.' },
       { id: '2', label: 'Auth Handshake', value: 'Secure', status: 'ok', description: 'JWT simulation layers are healthy.' },
       { id: '3', label: 'Resource Load', value: '12%', status: 'ok', description: 'Low impact on browser memory footprint.' }
     ];

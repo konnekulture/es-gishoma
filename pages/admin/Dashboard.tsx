@@ -23,17 +23,22 @@ export default function Dashboard() {
 
   useEffect(() => {
     setIsMounted(true);
-    const tData = MockDB.getTrafficStats();
-    const msgStats = MockDB.getMessageStats();
-    setTrafficStats(tData);
-    setStats({
-      announcements: MockDB.getAnnouncements().length,
-      staff: MockDB.getStaff().length,
-      gallery: MockDB.getGallery().length,
-      totalVisitors: tData.totalVisitors,
-      activeVisitors: tData.activeVisitors,
-      newMessages: msgStats.new
-    });
+    // FIX: getGallery is async and returns a promise. We need an async function to await it.
+    const loadStats = async () => {
+      const tData = MockDB.getTrafficStats();
+      const msgStats = MockDB.getMessageStats();
+      const galleryItems = await MockDB.getGallery();
+      setTrafficStats(tData);
+      setStats({
+        announcements: MockDB.getAnnouncements().length,
+        staff: MockDB.getStaff().length,
+        gallery: galleryItems.length,
+        totalVisitors: tData.totalVisitors,
+        activeVisitors: tData.activeVisitors,
+        newMessages: msgStats.new
+      });
+    };
+    loadStats();
   }, []);
 
   const runDiagnostics = async () => {

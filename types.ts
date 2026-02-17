@@ -30,6 +30,16 @@ export interface GalleryItem {
   deletedAt?: string | null;
 }
 
+export interface Book {
+  id: string;
+  title: string;
+  category: 'Sciences' | 'ICT' | 'Environment' | 'Social Life';
+  fileUrl: string;
+  fileName: string;
+  description?: string;
+  deletedAt?: string | null;
+}
+
 export interface User {
   id: string;
   name: string;

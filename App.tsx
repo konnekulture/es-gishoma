@@ -14,7 +14,8 @@ import {
   X,
   Settings,
   ChevronRight,
-  Inbox
+  Inbox,
+  BookOpen
 } from 'lucide-react';
 import Home from './pages/Home';
 import About from './pages/About';
@@ -22,12 +23,14 @@ import Announcements from './pages/Announcements';
 import Gallery from './pages/Gallery';
 import StaffPage from './pages/StaffPage';
 import Contact from './pages/Contact';
+import Curriculum from './pages/Curriculum';
 import Login from './pages/admin/Login';
 import Dashboard from './pages/admin/Dashboard';
 import ManageAnnouncements from './pages/admin/ManageAnnouncements';
 import ManageStaff from './pages/admin/ManageStaff';
 import ManageGallery from './pages/admin/ManageGallery';
 import ManageMessages from './pages/admin/ManageMessages';
+import ManageBooks from './pages/admin/ManageBooks';
 import { MockDB } from './services/mockDb';
 
 // --- Shared Components ---
@@ -40,6 +43,7 @@ const Navbar: React.FC = () => {
   const navLinks = [
     { name: 'Home', path: '/', icon: HomeIcon },
     { name: 'About', path: '/about', icon: Info },
+    { name: 'Curriculum', path: '/curriculum', icon: BookOpen },
     { name: 'News', path: '/news', icon: Megaphone },
     { name: 'Gallery', path: '/gallery', icon: GalleryIcon },
     { name: 'Staff', path: '/staff', icon: Users },
@@ -155,7 +159,7 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="font-bold mb-6 text-lg">Academics</h4>
             <ul className="space-y-3 text-slate-400 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">Curriculum</a></li>
+              <li><Link to="/curriculum" className="hover:text-white transition-colors">Curriculum</Link></li>
               <li><a href="#" className="hover:text-white transition-colors">Examination</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Admissions</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Alumni</a></li>
@@ -199,6 +203,7 @@ const AdminSidebar: React.FC<{ isOpen: boolean; toggle: () => void }> = ({ isOpe
     { name: 'Inbox', path: '/admin/messages', icon: Inbox },
     { name: 'Announcements', path: '/admin/announcements', icon: Megaphone },
     { name: 'Staff Management', path: '/admin/staff', icon: Users },
+    { name: 'Curriculum Books', path: '/admin/books', icon: BookOpen },
     { name: 'Gallery Management', path: '/admin/gallery', icon: GalleryIcon },
   ];
 
@@ -275,6 +280,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
+            <Route path="/curriculum" element={<Curriculum />} />
             <Route path="/news" element={<Announcements />} />
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/staff" element={<StaffPage />} />
@@ -306,6 +312,7 @@ export default function App() {
                         <Route path="messages" element={<ManageMessages />} />
                         <Route path="announcements" element={<ManageAnnouncements />} />
                         <Route path="staff" element={<ManageStaff />} />
+                        <Route path="books" element={<ManageBooks />} />
                         <Route path="gallery" element={<ManageGallery />} />
                         <Route path="*" element={<Navigate to="dashboard" />} />
                       </Routes>

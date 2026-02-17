@@ -11,8 +11,13 @@ export default function Home() {
   const [config, setConfig] = useState<HomeConfig>(MockDB.getHomeConfig());
 
   useEffect(() => {
-    setAnnouncements(MockDB.getAnnouncements().filter(a => a.isFeatured).slice(0, 3));
-    setFeaturedGallery(MockDB.getGallery().filter(g => g.isFeatured).slice(0, 4));
+    // FIX: getGallery is async and returns a promise. We need to await it.
+    const loadAsyncData = async () => {
+      setAnnouncements(MockDB.getAnnouncements().filter(a => a.isFeatured).slice(0, 3));
+      const gallery = await MockDB.getGallery();
+      setFeaturedGallery(gallery.filter(g => g.isFeatured).slice(0, 4));
+    };
+    loadAsyncData();
   }, []);
 
   const stats = [
@@ -188,7 +193,7 @@ export default function Home() {
                 <Link to="/contact" className="px-10 py-5 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all text-center shadow-xl shadow-indigo-900/40">
                   Enquire Now
                 </Link>
-                <Link to="/login" className="px-10 py-5 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-2xl font-bold hover:bg-white/20 transition-all text-center">
+                <Link to="/contact" className="px-10 py-5 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-2xl font-bold hover:bg-white/20 transition-all text-center">
                   Staff Access
                 </Link>
               </div>

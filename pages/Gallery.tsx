@@ -10,7 +10,12 @@ export default function Gallery() {
   const [filter, setFilter] = useState('All');
 
   useEffect(() => {
-    setItems(MockDB.getGallery());
+    // FIX: getGallery is async and returns a promise.
+    const loadGallery = async () => {
+      const galleryData = await MockDB.getGallery();
+      setItems(galleryData);
+    };
+    loadGallery();
   }, []);
 
   const categories = ['All', ...Array.from(new Set(items.map(i => i.category)))];
