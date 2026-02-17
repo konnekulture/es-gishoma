@@ -4,13 +4,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ES GISHOMA</title>
+  <title>ES GISHOMA | School Management System</title>
+  
+  <!-- Tailwind CSS Engine - Requires Internet Connection -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts - Requires Internet Connection -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  
+  <script>
+    // Tailwind Configuration to ensure JIT engine catches all classes
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+          },
+          colors: {
+            indigo: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+          },
+        },
+      },
+    }
+  </script>
+
   <style>
-    body { font-family: 'Inter', sans-serif; }
+    /* Base styles to prevent "Flash of Unstyled Content" */
+    :root {
+      background-color: #f8fafc;
+    }
+    body { 
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
     h1, h2, h3, .brand-font { font-family: 'Playfair Display', serif; }
+    
+    /* Loading state visibility */
+    #root:empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #f8fafc;
+    }
+    #root:empty::after {
+      content: "Initializing ES GISHOMA...";
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
   </style>
+
 <script type="importmap">
 {
   "imports": {
@@ -30,7 +84,7 @@
 </head>
 <body class="bg-slate-50 text-slate-900">
   <div id="root"></div>
-  <!-- This script tag is essential to load the React application entry point -->
+  <!-- Entry point script -->
   <script type="module" src="index.tsx"></script>
 </body>
 </html>
