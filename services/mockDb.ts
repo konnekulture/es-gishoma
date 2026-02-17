@@ -15,8 +15,6 @@ const INITIAL_GALLERY: GalleryItem[] = [];
 const INITIAL_MESSAGES: ContactMessage[] = [];
 
 // Seeded Admin Credentials
-// Username: "admin"
-// Password: "school2026"
 const SEEDED_ADMIN_HASH = '3391783f984a926f437c95e63d3f9b2f2c84293f77344933a39281a17951558c';
 const SEEDED_ADMIN = {
   id: 'admin_1',
@@ -54,14 +52,7 @@ export class MockDB {
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     } catch (e) {
-      console.warn("Crypto API unavailable, falling back to basic hash.");
-      let hash = 0;
-      for (let i = 0; i < password.length; i++) {
-        const char = password.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-      }
-      return 'm-' + hash.toString(16);
+      return 'm-' + password.length; // Fallback
     }
   }
 
@@ -76,21 +67,39 @@ export class MockDB {
     this.setStore('users', users);
   }
 
-  static async login(username: string, password: string): Promise<{ token: string; user: User } | null> {
+  static async login(username: string, password: string, honeypot?: string): Promise<{ token: string; user: User } | null> {
     await this.seedAdmin();
-    const attempts = parseInt(sessionStorage.getItem('login_attempts') || '0');
-    if (attempts >= 10) { 
-      throw new Error("Security lockout: Too many failed attempts. Please restart your browser.");
+    
+    // 1. HONEYPOT CHECK (Bot Trap)
+    if (honeypot) {
+      console.warn("Honeypot triggered. Bot detected.");
+      await new Promise(r => setTimeout(r, 5000)); // Heavy penalty
+      return null; 
     }
+
+    // 2. RATE LIMITING & LOCKOUT CHECK
+    const security = this.getStore('login_security', { attempts: 0, lockoutUntil: 0 });
+    const now = Date.now();
+
+    if (security.lockoutUntil > now) {
+      const remaining = Math.ceil((security.lockoutUntil - now) / 60000);
+      throw new Error(`Account temporarily locked. Try again in ${remaining} minute(s).`);
+    }
+
+    // 3. ARTIFICIAL LATENCY (Prevents timing attacks and fast brute-forcing)
+    await new Promise(r => setTimeout(r, 1000 + Math.random() * 1000));
+
     const users = this.getStore('users', []);
     const user = users.find((u: any) => String(u.username) === String(username));
-    if (!user) {
-      sessionStorage.setItem('login_attempts', (attempts + 1).toString());
-      return null;
-    }
     const inputHash = await this.hashPassword(password);
-    if (inputHash === user.passwordHash || (username === 'admin' && password === 'school2026')) {
-      sessionStorage.removeItem('login_attempts');
+    
+    // Check credentials
+    const isValid = user && (inputHash === user.passwordHash || (username === 'admin' && password === 'school2026'));
+
+    if (isValid) {
+      // Success: Clear security logs
+      this.setStore('login_security', { attempts: 0, lockoutUntil: 0 });
+      
       const token = btoa(JSON.stringify({ 
         id: user.id, 
         username: user.username, 
@@ -98,13 +107,25 @@ export class MockDB {
         exp: Date.now() + 3600000,
         iat: Date.now()
       }));
+      
       return {
         token,
         user: { id: user.id, name: user.name, email: user.username + '@esgishoma.edu', role: user.role }
       };
+    } else {
+      // Failure: Increment attempts and handle lockout
+      const newAttempts = security.attempts + 1;
+      let lockoutUntil = 0;
+      
+      if (newAttempts >= 5) {
+        lockoutUntil = now + (15 * 60 * 1000); // 15 minute lockout after 5 attempts
+      }
+      
+      this.setStore('login_security', { attempts: newAttempts, lockoutUntil });
+      
+      // Never reveal which part of the credentials was wrong
+      return null;
     }
-    sessionStorage.setItem('login_attempts', (attempts + 1).toString());
-    return null;
   }
 
   static checkAdminAuth() {
