@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ES GISHOMA | School Management System</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4f46e5">
@@ -28,6 +28,9 @@
             indigo: { 50: '#eef2ff', 100: '#e0e7ff', 600: '#4f46e5', 700: '#4338ca', 900: '#1e1b4b' },
             slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 900: '#0f172a' }
           },
+          boxShadow: {
+            '3xl': '0 35px 60px -15px rgba(0, 0, 0, 0.3)',
+          }
         },
       },
     }
@@ -36,24 +39,82 @@
   <style>
     /* CRITICAL CSS FALLBACK: Ensures page structure is visible even offline */
     :root { --indigo-600: #4f46e5; --slate-900: #0f172a; --slate-50: #f8fafc; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: var(--slate-50); color: var(--slate-900); line-height: 1.5; }
-    #root { display: flex; flex-direction: column; min-height: 100vh; position: relative; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    body { 
+      font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+      background-color: var(--slate-50); 
+      color: var(--slate-900); 
+      line-height: 1.5;
+    }
+
+    #root { 
+      display: flex; 
+      flex-direction: column; 
+      min-height: 100vh; 
+      position: relative; 
+      width: 100%;
+    }
+
     .brand-font { font-family: 'Playfair Display', serif; }
     
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Scrollbar Hiding */
+    .custom-scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .custom-scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
     /* Layout placeholders */
-    nav { background: white; border-bottom: 1px solid #e2e8f0; height: 5rem; width: 100%; position: sticky; top: 0; z-index: 50; }
-    footer { background: var(--slate-900); color: white; padding: 4rem 1rem; margin-top: auto; }
+    nav { background: white; border-bottom: 1px solid #e2e8f0; width: 100%; position: sticky; top: 0; z-index: 50; }
+    footer { background: var(--slate-900); color: white; margin-top: auto; }
     
     /* Splash Screen Loader */
     #root:empty::after {
       content: "ES GISHOMA";
       position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      font-weight: 900; color: var(--indigo-600); font-size: 24px; letter-spacing: 0.2em;
+      font-weight: 900; color: var(--indigo-600); font-size: 20px; letter-spacing: 0.25em;
       font-family: 'Playfair Display', serif;
       animation: pulse 2s infinite ease-in-out;
+      text-transform: uppercase;
     }
-    @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+    @keyframes pulse { 0% { opacity: 0.2; transform: translate(-50%, -50%) scale(0.95); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0.2; transform: translate(-50%, -50%) scale(0.95); } }
+
+    /* Fix for iOS momentum scrolling */
+    .overflow-y-auto {
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Utility for aspect ratios on older browsers */
+    .aspect-video { aspect-ratio: 16 / 9; }
+    .aspect-square { aspect-ratio: 1 / 1; }
   </style>
 
 <script type="importmap">
@@ -73,7 +134,7 @@
 }
 </script>
 </head>
-<body class="bg-slate-50 text-slate-900 overflow-x-hidden">
+<body class="bg-slate-50 text-slate-900 overflow-x-hidden antialiased">
   <div id="root"></div>
   <script type="module" src="index.tsx"></script>
 </body>

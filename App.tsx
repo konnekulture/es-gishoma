@@ -53,22 +53,22 @@ const Navbar: React.FC = () => {
   if (isAdminPath) return null;
 
   return (
-    <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 w-full">
+    <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 w-full transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20">
+        <div className="flex justify-between h-16 sm:h-20">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2 group">
-              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl group-hover:bg-indigo-700 transition-colors shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg sm:text-xl group-hover:bg-indigo-700 transition-colors shrink-0">
                 EG
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-bold text-slate-900 brand-font leading-none">ES GISHOMA</span>
-                <span className="text-[10px] uppercase tracking-widest text-indigo-600 font-bold">School of Excellence</span>
+                <span className="text-lg sm:text-xl font-bold text-slate-900 brand-font leading-none">ES GISHOMA</span>
+                <span className="text-[8px] sm:text-[10px] uppercase tracking-widest text-indigo-600 font-bold">School of Excellence</span>
               </div>
             </Link>
           </div>
           
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
             {navLinks.map((link) => (
               <Link 
                 key={link.path}
@@ -81,13 +81,17 @@ const Navbar: React.FC = () => {
                 <span>{link.name}</span>
               </Link>
             ))}
-            <Link to="/login" className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-full hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100">
+            <Link to="/login" className="px-4 py-2 lg:px-5 lg:py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-full hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100">
               Admin Portal
             </Link>
           </div>
 
           <div className="md:hidden flex items-center">
-            <button onClick={() => setIsOpen(!isOpen)} className="text-slate-600 hover:text-indigo-600 p-2">
+            <button 
+              onClick={() => setIsOpen(!isOpen)} 
+              className="text-slate-600 hover:text-indigo-600 p-2 transition-colors focus:outline-none"
+              aria-label="Toggle Menu"
+            >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
@@ -95,14 +99,16 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Mobile Menu */}
-      {isOpen && (
-        <div className="md:hidden bg-white border-b border-slate-200 py-4 px-4 space-y-2 animate-in slide-in-from-top duration-300">
+      <div className={`md:hidden bg-white border-b border-slate-200 overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100 py-4' : 'max-h-0 opacity-0'}`}>
+        <div className="px-4 space-y-1">
           {navLinks.map((link) => (
             <Link 
               key={link.path}
               to={link.path}
               onClick={() => setIsOpen(false)}
-              className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
+              className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                location.pathname === link.path ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-slate-50 text-slate-600'
+              }`}
             >
               <link.icon className="w-5 h-5" />
               <span className="font-medium">{link.name}</span>
@@ -111,13 +117,13 @@ const Navbar: React.FC = () => {
           <Link 
             to="/login"
             onClick={() => setIsOpen(false)}
-            className="flex items-center space-x-3 p-3 rounded-lg bg-indigo-50 text-indigo-600 font-bold"
+            className="flex items-center space-x-3 p-3 rounded-lg bg-indigo-600 text-white font-bold mt-4 shadow-lg shadow-indigo-200"
           >
             <Settings className="w-5 h-5" />
-            <span>Admin Login</span>
+            <span>Admin Portal</span>
           </Link>
         </div>
-      )}
+      </div>
     </nav>
   );
 };
@@ -135,21 +141,21 @@ const Footer: React.FC = () => {
   if (location.pathname.startsWith('/admin')) return null;
 
   return (
-    <footer className="bg-slate-900 text-white pt-16 pb-8 mt-auto">
+    <footer className="bg-slate-900 text-white pt-12 sm:pt-16 pb-8 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-12">
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">EG</div>
               <span className="text-xl font-bold brand-font">ES GISHOMA</span>
             </div>
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
               Nurturing minds, building character, and empowering future leaders through a holistic educational approach since 1985.
             </p>
           </div>
           <div>
-            <h4 className="font-bold mb-6 text-lg">Quick Links</h4>
-            <ul className="space-y-3 text-slate-400 text-sm">
+            <h4 className="font-bold mb-4 sm:mb-6 text-lg">Quick Links</h4>
+            <ul className="space-y-2 sm:space-y-3 text-slate-400 text-sm">
               <li><Link to="/about" className="hover:text-white transition-colors">History & Mission</Link></li>
               <li><Link to="/news" className="hover:text-white transition-colors">Announcements</Link></li>
               <li><Link to="/staff" className="hover:text-white transition-colors">Our Teachers</Link></li>
@@ -157,8 +163,8 @@ const Footer: React.FC = () => {
             </ul>
           </div>
           <div>
-            <h4 className="font-bold mb-6 text-lg">Academics</h4>
-            <ul className="space-y-3 text-slate-400 text-sm">
+            <h4 className="font-bold mb-4 sm:mb-6 text-lg">Academics</h4>
+            <ul className="space-y-2 sm:space-y-3 text-slate-400 text-sm">
               <li><Link to="/curriculum" className="hover:text-white transition-colors">Curriculum</Link></li>
               <li><a href="#" className="hover:text-white transition-colors">Examination</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Admissions</a></li>
@@ -166,25 +172,25 @@ const Footer: React.FC = () => {
             </ul>
           </div>
           <div>
-            <h4 className="font-bold mb-6 text-lg">Contact Us</h4>
-            <ul className="space-y-3 text-slate-400 text-sm">
+            <h4 className="font-bold mb-4 sm:mb-6 text-lg">Contact Us</h4>
+            <ul className="space-y-2 sm:space-y-3 text-slate-400 text-sm">
               <li className="flex items-start space-x-3 text-slate-400">
-                <Mail className="w-4 h-4 mt-1 text-indigo-500" />
-                <span>info@esgishoma.edu</span>
+                <Mail className="w-4 h-4 mt-1 text-indigo-500 shrink-0" />
+                <span className="break-all">info@esgishoma.edu</span>
               </li>
               <li className="flex items-start space-x-3 text-slate-400">
-                <HomeIcon className="w-4 h-4 mt-1 text-indigo-500" />
+                <HomeIcon className="w-4 h-4 mt-1 text-indigo-500 shrink-0" />
                 <span className="leading-tight">123 Academic Way, Education District, NY 10001</span>
               </li>
             </ul>
           </div>
         </div>
-        <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-slate-500 text-xs">
+        <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-slate-500 text-xs gap-4">
           <div className="text-center md:text-left space-y-1">
             <p>© 2024 ES GISHOMA. All rights reserved.</p>
             <p className="text-indigo-500/80 font-medium">Developed by Chretien Delphin</p>
           </div>
-          <div className="flex space-x-6 mt-4 md:mt-0">
+          <div className="flex space-x-6">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
           </div>
@@ -219,13 +225,13 @@ const AdminSidebar: React.FC<{ isOpen: boolean; toggle: () => void }> = ({ isOpe
       {/* Mobile Backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
           onClick={toggle}
         ></div>
       )}
       
       <div className={`w-64 bg-slate-900 min-h-screen text-white flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-8 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div className="p-6 sm:p-8 border-b border-slate-800 flex items-center justify-between shrink-0 h-16 sm:h-20">
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center font-bold text-white shrink-0">EG</div>
             <span className="font-bold tracking-tight text-white brand-font">ADMIN</span>
@@ -234,28 +240,28 @@ const AdminSidebar: React.FC<{ isOpen: boolean; toggle: () => void }> = ({ isOpe
             <X className="w-6 h-6" />
           </button>
         </div>
-        <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1.5 mt-2 overflow-y-auto custom-scrollbar">
           {menuItems.map((item) => (
             <Link 
               key={item.path}
               to={item.path}
               onClick={() => { if (window.innerWidth < 1024) toggle(); }}
-              className={`flex items-center space-x-3 p-3 rounded-lg transition-all ${
+              className={`flex items-center space-x-3 p-3 rounded-xl transition-all ${
                 location.pathname === item.path ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
               }`}
             >
               <item.icon className="w-5 h-5 shrink-0" />
-              <span className="font-medium whitespace-nowrap">{item.name}</span>
+              <span className="font-medium whitespace-nowrap text-sm">{item.name}</span>
             </Link>
           ))}
         </nav>
         <div className="p-4 border-t border-slate-800 shrink-0">
           <button 
             onClick={handleLogout}
-            className="flex items-center space-x-3 w-full p-3 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+            className="flex items-center space-x-3 w-full p-3 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
           >
             <LogOut className="w-5 h-5 shrink-0" />
-            <span className="font-medium">Sign Out</span>
+            <span className="font-medium text-sm">Sign Out</span>
           </button>
         </div>
       </div>
@@ -290,23 +296,24 @@ export default function App() {
             {/* Admin Routes */}
             <Route path="/admin/*" element={
               <ProtectedRoute>
-                <div className="flex bg-slate-50 min-h-screen relative w-full">
+                <div className="flex bg-slate-50 min-h-screen relative w-full overflow-hidden">
                   <AdminSidebar 
                     isOpen={isAdminSidebarOpen} 
                     toggle={() => setIsAdminSidebarOpen(!isAdminSidebarOpen)} 
                   />
-                  <div className="flex-1 lg:ml-64 flex flex-col w-full overflow-hidden">
+                  <div className="flex-1 lg:ml-64 flex flex-col w-full min-w-0 overflow-hidden">
                     {/* Admin Mobile Header */}
                     <header className="lg:hidden bg-white border-b border-slate-200 h-16 flex items-center px-4 shrink-0 w-full sticky top-0 z-40">
                       <button 
                         onClick={() => setIsAdminSidebarOpen(true)}
-                        className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg"
+                        className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                        aria-label="Open Sidebar"
                       >
                         <Menu className="w-6 h-6" />
                       </button>
                       <span className="ml-4 font-bold text-slate-900">Admin Portal</span>
                     </header>
-                    <div className="p-4 sm:p-6 lg:p-10 flex-1 overflow-x-hidden w-full">
+                    <div className="p-4 sm:p-6 lg:p-10 flex-1 overflow-x-hidden overflow-y-auto w-full max-w-full">
                       <Routes>
                         <Route path="dashboard" element={<Dashboard />} />
                         <Route path="messages" element={<ManageMessages />} />
