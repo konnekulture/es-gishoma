@@ -1,0 +1,18 @@
+
+{
+  "name": "ES GISHOMA Management System",
+  "short_name": "ES GISHOMA",
+  "description": "Comprehensive school representation and management portal.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2991/2991148.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
