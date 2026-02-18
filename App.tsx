@@ -176,18 +176,18 @@ const Footer: React.FC = () => {
             <ul className="space-y-2 sm:space-y-3 text-slate-400 text-sm">
               <li className="flex items-start space-x-3 text-slate-400">
                 <Mail className="w-4 h-4 mt-1 text-indigo-500 shrink-0" />
-                <span className="break-all">info@esgishoma.edu</span>
+                <span className="break-all">esgishoma231@gmail.com</span>
               </li>
               <li className="flex items-start space-x-3 text-slate-400">
                 <HomeIcon className="w-4 h-4 mt-1 text-indigo-500 shrink-0" />
-                <span className="leading-tight">123 Academic Way, Education District, NY 10001</span>
+                <span className="leading-tight">Gishoma street, rusizi District</span>
               </li>
             </ul>
           </div>
         </div>
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-slate-500 text-xs gap-4">
           <div className="text-center md:text-left space-y-1">
-            <p>© 2024 ES GISHOMA. All rights reserved.</p>
+            <p>© 2026 ES GISHOMA. All rights reserved.</p>
             <p className="text-indigo-500/80 font-medium">Developed by Chretien Delphin</p>
           </div>
           <div className="flex space-x-6">
