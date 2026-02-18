@@ -3,15 +3,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>ES GISHOMA | School Management System</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4f46e5">
   
-  <!-- Tailwind CSS Engine - Requires Internet for first load -->
+  <!-- Tailwind CSS Engine -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Google Fonts - Cached by SW after first load -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
@@ -37,7 +40,7 @@
   </script>
 
   <style>
-    /* CRITICAL CSS FALLBACK: Ensures page structure is visible even offline */
+    /* CRITICAL OFFLINE FALLBACK CSS */
     :root { --indigo-600: #4f46e5; --slate-900: #0f172a; --slate-50: #f8fafc; }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
@@ -47,7 +50,8 @@
       margin: 0;
       padding: 0;
       overflow-x: hidden;
-      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     body { 
@@ -55,66 +59,40 @@
       background-color: var(--slate-50); 
       color: var(--slate-900); 
       line-height: 1.5;
+      overscroll-behavior-y: none; /* Prevent rubber-banding on mobile */
     }
 
     #root { 
       display: flex; 
       flex-direction: column; 
       min-height: 100vh; 
-      position: relative; 
       width: 100%;
     }
 
     .brand-font { font-family: 'Playfair Display', serif; }
     
-    /* Custom Scrollbar */
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #f1f5f9;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 10px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
-
-    /* Scrollbar Hiding */
-    .custom-scrollbar-hide::-webkit-scrollbar {
-      display: none;
-    }
-    .custom-scrollbar-hide {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-
-    /* Layout placeholders */
-    nav { background: white; border-bottom: 1px solid #e2e8f0; width: 100%; position: sticky; top: 0; z-index: 50; }
-    footer { background: var(--slate-900); color: white; margin-top: auto; }
+    /* Responsive Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     
     /* Splash Screen Loader */
     #root:empty::after {
       content: "ES GISHOMA";
       position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      font-weight: 900; color: var(--indigo-600); font-size: 20px; letter-spacing: 0.25em;
+      font-weight: 900; color: var(--indigo-600); font-size: 24px; letter-spacing: 0.1em;
       font-family: 'Playfair Display', serif;
       animation: pulse 2s infinite ease-in-out;
-      text-transform: uppercase;
     }
-    @keyframes pulse { 0% { opacity: 0.2; transform: translate(-50%, -50%) scale(0.95); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0.2; transform: translate(-50%, -50%) scale(0.95); } }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(0.95); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 
     /* Fix for iOS momentum scrolling */
-    .overflow-y-auto {
-      -webkit-overflow-scrolling: touch;
-    }
+    .overflow-y-auto { -webkit-overflow-scrolling: touch; }
 
-    /* Utility for aspect ratios on older browsers */
-    .aspect-video { aspect-ratio: 16 / 9; }
-    .aspect-square { aspect-ratio: 1 / 1; }
+    /* Accessibility improvements */
+    @media (max-width: 640px) {
+      input, select, textarea { font-size: 16px !important; } /* Prevent auto-zoom on iOS */
+    }
   </style>
 
 <script type="importmap">
@@ -134,8 +112,22 @@
 }
 </script>
 </head>
-<body class="bg-slate-50 text-slate-900 overflow-x-hidden antialiased">
+<body class="bg-slate-50 text-slate-900 overflow-x-hidden selection:bg-indigo-100">
   <div id="root"></div>
   <script type="module" src="index.tsx"></script>
+  
+  <script>
+    // Failsafe: Log offline status
+    window.addEventListener('load', () => {
+      function updateOnlineStatus() {
+        if (!navigator.onLine) {
+          console.log("App running in OFFLINE mode. Styles loaded from Service Worker cache.");
+        }
+      }
+      window.addEventListener('online', updateOnlineStatus);
+      window.addEventListener('offline', updateOnlineStatus);
+      updateOnlineStatus();
+    });
+  </script>
 </body>
 </html>
