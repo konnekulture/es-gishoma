@@ -1,5 +1,5 @@
 
-import { Announcement, Staff, GalleryItem, HomeConfig, DiagnosticResult, ContactMessage, ChatReply, User, Book } from '../types';
+import { Announcement, Staff, GalleryItem, HomeConfig, DiagnosticResult, ContactMessage, ChatReply, User, Book, PastPaper, AlumniStory } from '../types';
 import { GoogleGenAI } from "@google/genai";
 import { FileStore } from './fileStore';
 
@@ -74,6 +74,29 @@ const INITIAL_BOOKS: Book[] = [
     fileName: 'web_dev.pdf',
     fileUrl: 'data:application/pdf;base64,JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL1BhZ2VzL0NvdW50IDEvS2lkc1szIDAgUl0+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA2MTIgNzkyXS9SZXNvdXJjZXM8PC9Gb250PDwvRjEgNCAwIFI+Pj4+L0NvbnRlbnRzIDUgMCBSPj4KZW5kb2JqCjQgMCBvYmoKPDwvVHlwZS9Gb250L1N1YnR5cGUvVHlwZTEvQmFzZUZvbnQvSGVsdmV0aWNhPj4KZW5kb2JqCjUgMCBvYmoKPDwvTGVuZ3RoIDQ4Pj5zdHJlYW0KQlQKL0YxIDI0IFRmCjcwIDcwMCBUZAooV2ViIERldmVsb3BtZW50KSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxNSAwMDAwMCBuIAowMDAwMDAwMDYwIDAwMDAwIG4gCjAwMDAwMDAxMTIgMDAwMDAgbiAKMDAwMDAwMDIzMSAwMDAwMCBuIAowMDAwMDAwMjgyIDAwMDAwIG4gCnRyYWlsZXIKPDwvU2l6ZSA2L1Jvb3QgMSAwIFI+PgpzdGFydHhyZWYKMzc5CiUlRU9G',
     description: 'Introduction to HTML, CSS, and JavaScript.'
+  }
+];
+
+const INITIAL_PAST_PAPERS: PastPaper[] = [
+  {
+    id: 'pp1',
+    title: 'Mathematics National Exam 2023',
+    subject: 'Mathematics',
+    year: 2023,
+    level: 'Senior 6',
+    fileName: 'math_2023.pdf',
+    fileUrl: 'data:application/pdf;base64,JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL1BhZ2VzL0NvdW50IDEvS2lkc1szIDAgUl0+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA2MTIgNzkyXS9SZXNvdXJjZXM8PC9Gb250PDwvRjEgNCAwIFI+Pj4+L0NvbnRlbnRzIDUgMCBSPj4KZW5kb2JqCjQgMCBvYmoKPDwvVHlwZS9Gb250L1N1YnR5cGUvVHlwZTEvQmFzZUZvbnQvSGVsdmV0aWNhPj4KZW5kb2JqCjUgMCBvYmoKPDwvTGVuZ3RoIDQ0Pj5zdHJlYW0KQlQKL0YxIDI0IFRmCjcwIDcwMCBUZAooTWF0aCAyMDIzKSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxNSAwMDAwMCBuIAowMDAwMDAwMDYwIDAwMDAwIG4gCjAwMDAwMDAxMTIgMDAwMDAgbiAKMDAwMDAwMDIzMSAwMDAwMCBuIAowMDAwMDAwMjgyIDAwMDAwIG4gCnRyYWlsZXIKPDwvU2l6ZSA2L1Jvb3QgMSAwIFI+PgpzdGFydHhyZWYKMzc1CiUlRU9G'
+  }
+];
+
+const INITIAL_ALUMNI_STORIES: AlumniStory[] = [
+  {
+    id: 'as1',
+    name: "Dr. Jean Bosco",
+    classYear: "Class of 1998",
+    role: "Chief Medical Officer",
+    image: "https://picsum.photos/seed/alumni1/400/400",
+    quote: "ES GISHOMA provided the foundation for my medical career. The discipline and dedication I learned here are invaluable."
   }
 ];
 
@@ -277,6 +300,64 @@ export class MockDB {
       books[index].deletedAt = new Date().toISOString();
       this.setStore('curriculum_books', books);
       await FileStore.deleteFile(id);
+    }
+  }
+
+  static async getPastPapers(includeDeleted = false): Promise<PastPaper[]> {
+    const items = this.getStore('past_papers', INITIAL_PAST_PAPERS);
+    const list = includeDeleted ? items : items.filter((p: any) => !p.deletedAt);
+    for (let p of list) {
+      const stored = await FileStore.getFile(p.id);
+      if (stored) p.fileUrl = stored;
+    }
+    return list;
+  }
+
+  static async savePastPaper(paper: PastPaper) {
+    this.checkAdminAuth();
+    if (paper.fileUrl && paper.fileUrl.startsWith('data:application/pdf')) {
+      await FileStore.saveFile(paper.id, paper.fileUrl);
+      paper.fileUrl = 'stored';
+    }
+    const papers = this.getStore('past_papers', INITIAL_PAST_PAPERS);
+    const index = papers.findIndex((p: any) => p.id === paper.id);
+    if (index > -1) papers[index] = { ...paper, deletedAt: null };
+    else papers.push(paper);
+    this.setStore('past_papers', papers);
+  }
+
+  static async deletePastPaper(id: string) {
+    this.checkAdminAuth();
+    const papers = this.getStore('past_papers', INITIAL_PAST_PAPERS);
+    const index = papers.findIndex((p: any) => p.id === id);
+    if (index > -1) {
+      papers[index].deletedAt = new Date().toISOString();
+      this.setStore('past_papers', papers);
+      await FileStore.deleteFile(id);
+    }
+  }
+
+  static getAlumniStories(includeDeleted = false): AlumniStory[] {
+    const items = this.getStore('alumni_stories', INITIAL_ALUMNI_STORIES);
+    return includeDeleted ? items : items.filter((s: any) => !s.deletedAt);
+  }
+
+  static async saveAlumniStory(story: AlumniStory) {
+    this.checkAdminAuth();
+    const stories = this.getAlumniStories(true);
+    const index = stories.findIndex(s => s.id === story.id);
+    if (index > -1) stories[index] = { ...story, deletedAt: null };
+    else stories.push(story);
+    this.setStore('alumni_stories', stories);
+  }
+
+  static async deleteAlumniStory(id: string) {
+    this.checkAdminAuth();
+    const stories = this.getAlumniStories(true);
+    const index = stories.findIndex(s => s.id === id);
+    if (index > -1) {
+      stories[index].deletedAt = new Date().toISOString();
+      this.setStore('alumni_stories', stories);
     }
   }
 

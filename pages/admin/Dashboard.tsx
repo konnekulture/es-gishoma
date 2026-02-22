@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
-import { Megaphone, Users, Image as GalleryIcon, Eye, TrendingUp, AlertCircle, Clock, CheckCircle2, XCircle, Loader2, X, Activity, MousePointer2, MessageSquare } from 'lucide-react';
+import { Megaphone, Users, Image as GalleryIcon, Eye, TrendingUp, AlertCircle, Clock, CheckCircle2, XCircle, Loader2, X, Activity, MousePointer2, MessageSquare, BookOpen, FileText, UserPlus, GraduationCap } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { MockDB, TrafficData } from '../../services/mockDb';
 import { DiagnosticResult } from '../../types';
 
@@ -205,27 +206,26 @@ export default function Dashboard() {
         <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col">
            <div className="flex items-center space-x-3 mb-8">
               <TrendingUp className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-xl font-bold text-slate-900">Engagement Log</h3>
+              <h3 className="text-xl font-bold text-slate-900">Quick Management</h3>
             </div>
-            <div className="space-y-6 flex-1 overflow-y-auto max-h-[300px] pr-2">
+            <div className="grid grid-cols-2 gap-4 flex-1">
               {[
-                { page: 'Inquiry Response Dispatched', time: 'Just now', user: 'Admin System' },
-                { page: 'External MX Lookup Success', time: '5 mins ago', user: 'Network Node' },
-                { page: 'Faculty Search Query', time: '14 mins ago', user: 'Visitor #219' },
-                { page: 'Gallery Asset Rendered', time: '22 mins ago', user: 'Visitor #221' },
-              ].map((act, i) => (
-                <div key={i} className="flex items-center justify-between group py-1">
-                  <div className="flex items-center space-x-4 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors shrink-0">
-                      <Users className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0 pr-2">
-                      <div className="text-sm font-bold text-slate-700 truncate">{act.page}</div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{act.user}</div>
-                    </div>
+                { label: 'Curriculum', icon: BookOpen, path: '/admin/books', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                { label: 'Past Papers', icon: FileText, path: '/admin/past-papers', color: 'text-rose-600', bg: 'bg-rose-50' },
+                { label: 'Alumni', icon: GraduationCap, path: '/admin/alumni', color: 'text-amber-600', bg: 'bg-amber-50' },
+                { label: 'Announcements', icon: Megaphone, path: '/admin/announcements', color: 'text-blue-600', bg: 'bg-blue-50' },
+                { label: 'Staff', icon: Users, path: '/admin/staff', color: 'text-purple-600', bg: 'bg-purple-50' },
+              ].map((item, i) => (
+                <Link 
+                  key={i} 
+                  to={item.path}
+                  className="flex flex-col items-center justify-center p-6 rounded-3xl border border-slate-100 hover:border-indigo-200 hover:shadow-lg transition-all group"
+                >
+                  <div className={`w-12 h-12 ${item.bg} ${item.color} rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                    <item.icon className="w-6 h-6" />
                   </div>
-                  <div className="text-xs font-medium text-slate-400 whitespace-nowrap">{act.time}</div>
-                </div>
+                  <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">{item.label}</span>
+                </Link>
               ))}
             </div>
         </div>

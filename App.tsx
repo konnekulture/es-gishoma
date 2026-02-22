@@ -15,7 +15,10 @@ import {
   Settings,
   ChevronRight,
   Inbox,
-  BookOpen
+  BookOpen,
+  FileText,
+  UserPlus,
+  GraduationCap
 } from 'lucide-react';
 import Home from './pages/Home';
 import About from './pages/About';
@@ -24,6 +27,8 @@ import Gallery from './pages/Gallery';
 import StaffPage from './pages/StaffPage';
 import Contact from './pages/Contact';
 import Curriculum from './pages/Curriculum';
+import Examinations from './pages/Examinations';
+import Alumni from './pages/Alumni';
 import Login from './pages/admin/Login';
 import Dashboard from './pages/admin/Dashboard';
 import ManageAnnouncements from './pages/admin/ManageAnnouncements';
@@ -31,23 +36,31 @@ import ManageStaff from './pages/admin/ManageStaff';
 import ManageGallery from './pages/admin/ManageGallery';
 import ManageMessages from './pages/admin/ManageMessages';
 import ManageBooks from './pages/admin/ManageBooks';
+import ManagePastPapers from './pages/admin/ManagePastPapers';
+import ManageAlumni from './pages/admin/ManageAlumni';
 import { MockDB } from './services/mockDb';
 
 // --- Shared Components ---
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAcademicsOpen, setIsAcademicsOpen] = useState(false);
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith('/admin');
 
   const navLinks = [
     { name: 'Home', path: '/', icon: HomeIcon },
     { name: 'About', path: '/about', icon: Info },
-    { name: 'Curriculum', path: '/curriculum', icon: BookOpen },
     { name: 'News', path: '/news', icon: Megaphone },
     { name: 'Gallery', path: '/gallery', icon: GalleryIcon },
     { name: 'Staff', path: '/staff', icon: Users },
     { name: 'Contact', path: '/contact', icon: Mail },
+  ];
+
+  const academicLinks = [
+    { name: 'Curriculum', path: '/curriculum' },
+    { name: 'Examination', path: '/examinations' },
+    { name: 'Alumni', path: '/alumni' },
   ];
 
   if (isAdminPath) return null;
@@ -68,8 +81,59 @@ const Navbar: React.FC = () => {
             </Link>
           </div>
           
-          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
-            {navLinks.map((link) => (
+          <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
+            <Link 
+              to="/"
+              className={`flex items-center space-x-1 text-sm font-medium transition-colors ${
+                location.pathname === '/' ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
+              }`}
+            >
+              <HomeIcon className="w-4 h-4" />
+              <span>Home</span>
+            </Link>
+
+            <Link 
+              to="/about"
+              className={`flex items-center space-x-1 text-sm font-medium transition-colors ${
+                location.pathname === '/about' ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
+              }`}
+            >
+              <Info className="w-4 h-4" />
+              <span>About</span>
+            </Link>
+
+            {/* Academics Dropdown */}
+            <div 
+              className="relative group py-4"
+              onMouseEnter={() => setIsAcademicsOpen(true)}
+              onMouseLeave={() => setIsAcademicsOpen(false)}
+            >
+              <button 
+                className={`flex items-center space-x-1 text-sm font-medium transition-colors outline-none ${
+                  academicLinks.some(l => l.path === location.pathname) ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Academics</span>
+                <ChevronRight className={`w-3 h-3 transition-transform duration-200 ${isAcademicsOpen ? 'rotate-90' : ''}`} />
+              </button>
+              
+              <div className={`absolute left-0 top-full w-48 bg-white border border-slate-100 shadow-xl rounded-2xl py-2 transition-all duration-200 origin-top-left ${isAcademicsOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}`}>
+                {academicLinks.map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`block px-4 py-2.5 text-sm font-medium hover:bg-indigo-50 hover:text-indigo-600 transition-colors ${
+                      location.pathname === link.path ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600'
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {navLinks.slice(2).map((link) => (
               <Link 
                 key={link.path}
                 to={link.path}
@@ -81,6 +145,7 @@ const Navbar: React.FC = () => {
                 <span>{link.name}</span>
               </Link>
             ))}
+            
             <Link to="/login" className="px-4 py-2 lg:px-5 lg:py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-full hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100">
               Admin Portal
             </Link>
@@ -99,9 +164,49 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Mobile Menu */}
-      <div className={`md:hidden bg-white border-b border-slate-200 overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100 py-4' : 'max-h-0 opacity-0'}`}>
+      <div className={`md:hidden bg-white border-b border-slate-200 overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[800px] opacity-100 py-4' : 'max-h-0 opacity-0'}`}>
         <div className="px-4 space-y-1">
-          {navLinks.map((link) => (
+          <Link 
+            to="/"
+            onClick={() => setIsOpen(false)}
+            className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location.pathname === '/' ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-slate-50 text-slate-600'
+            }`}
+          >
+            <HomeIcon className="w-5 h-5" />
+            <span className="font-medium">Home</span>
+          </Link>
+
+          <Link 
+            to="/about"
+            onClick={() => setIsOpen(false)}
+            className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location.pathname === '/about' ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-slate-50 text-slate-600'
+            }`}
+          >
+            <Info className="w-5 h-5" />
+            <span className="font-medium">About</span>
+          </Link>
+
+          {/* Mobile Academics Section */}
+          <div className="py-2">
+            <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Academics</div>
+            {academicLinks.map((link) => (
+              <Link 
+                key={link.path}
+                to={link.path}
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ml-2 ${
+                  location.pathname === link.path ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-slate-50 text-slate-600'
+                }`}
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                <span className="font-medium">{link.name}</span>
+              </Link>
+            ))}
+          </div>
+
+          {navLinks.slice(2).map((link) => (
             <Link 
               key={link.path}
               to={link.path}
@@ -114,6 +219,7 @@ const Navbar: React.FC = () => {
               <span className="font-medium">{link.name}</span>
             </Link>
           ))}
+          
           <Link 
             to="/login"
             onClick={() => setIsOpen(false)}
@@ -166,9 +272,8 @@ const Footer: React.FC = () => {
             <h4 className="font-bold mb-4 sm:mb-6 text-lg">Academics</h4>
             <ul className="space-y-2 sm:space-y-3 text-slate-400 text-sm">
               <li><Link to="/curriculum" className="hover:text-white transition-colors">Curriculum</Link></li>
-              <li><a href="#" className="hover:text-white transition-colors">Examination</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Admissions</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Alumni</a></li>
+              <li><Link to="/examinations" className="hover:text-white transition-colors">Examination</Link></li>
+              <li><Link to="/alumni" className="hover:text-white transition-colors">Alumni</Link></li>
             </ul>
           </div>
           <div>
@@ -176,18 +281,18 @@ const Footer: React.FC = () => {
             <ul className="space-y-2 sm:space-y-3 text-slate-400 text-sm">
               <li className="flex items-start space-x-3 text-slate-400">
                 <Mail className="w-4 h-4 mt-1 text-indigo-500 shrink-0" />
-                <span className="break-all">esgishoma231@gmail.com</span>
+                <span className="break-all">info@esgishoma.edu</span>
               </li>
               <li className="flex items-start space-x-3 text-slate-400">
                 <HomeIcon className="w-4 h-4 mt-1 text-indigo-500 shrink-0" />
-                <span className="leading-tight">Gishoma street, rusizi District</span>
+                <span className="leading-tight">123 Academic Way, Education District, NY 10001</span>
               </li>
             </ul>
           </div>
         </div>
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-slate-500 text-xs gap-4">
           <div className="text-center md:text-left space-y-1">
-            <p>© 2026 ES GISHOMA. All rights reserved.</p>
+            <p>© 2024 ES GISHOMA. All rights reserved.</p>
             <p className="text-indigo-500/80 font-medium">Developed by Chretien Delphin</p>
           </div>
           <div className="flex space-x-6">
@@ -210,6 +315,8 @@ const AdminSidebar: React.FC<{ isOpen: boolean; toggle: () => void }> = ({ isOpe
     { name: 'Announcements', path: '/admin/announcements', icon: Megaphone },
     { name: 'Staff Management', path: '/admin/staff', icon: Users },
     { name: 'Curriculum Books', path: '/admin/books', icon: BookOpen },
+    { name: 'Past Papers', path: '/admin/past-papers', icon: FileText },
+    { name: 'Alumni Stories', path: '/admin/alumni', icon: GraduationCap },
     { name: 'Gallery Management', path: '/admin/gallery', icon: GalleryIcon },
   ];
 
@@ -287,6 +394,8 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/curriculum" element={<Curriculum />} />
+            <Route path="/examinations" element={<Examinations />} />
+            <Route path="/alumni" element={<Alumni />} />
             <Route path="/news" element={<Announcements />} />
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/staff" element={<StaffPage />} />
@@ -320,6 +429,8 @@ export default function App() {
                         <Route path="announcements" element={<ManageAnnouncements />} />
                         <Route path="staff" element={<ManageStaff />} />
                         <Route path="books" element={<ManageBooks />} />
+                        <Route path="past-papers" element={<ManagePastPapers />} />
+                        <Route path="alumni" element={<ManageAlumni />} />
                         <Route path="gallery" element={<ManageGallery />} />
                         <Route path="*" element={<Navigate to="dashboard" />} />
                       </Routes>

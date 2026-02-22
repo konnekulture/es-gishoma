@@ -83,3 +83,24 @@ export interface ContactMessage {
   replies: ChatReply[];
   deletedAt?: string | null;
 }
+
+export interface PastPaper {
+  id: string;
+  title: string;
+  subject: string;
+  year: number;
+  level: string;
+  fileUrl: string;
+  fileName: string;
+  deletedAt?: string | null;
+}
+
+export interface AlumniStory {
+  id: string;
+  name: string;
+  classYear: string;
+  role: string;
+  quote: string;
+  image: string;
+  deletedAt?: string | null;
+}
