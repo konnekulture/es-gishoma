@@ -1,13 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Search, X, FileText, Upload, AlertTriangle, Loader2, Tag, Calendar } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, X, FileText, Upload, AlertTriangle, Loader2, Tag, Calendar, Layers, ChevronRight, Settings } from 'lucide-react';
 import { MockDB } from '../../services/mockDb';
-import { PastPaper } from '../../types';
+import { PastPaper, ALevelSection } from '../../types';
 
 export default function ManagePastPapers() {
   const [papers, setPapers] = useState<PastPaper[]>([]);
+  const [alevelSections, setAlevelSections] = useState<ALevelSection[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
   const [editingPaper, setEditingPaper] = useState<PastPaper | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,9 +20,13 @@ export default function ManagePastPapers() {
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
   const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [level, setLevel] = useState('');
+  const [division, setDivision] = useState<'O-Level' | 'A-Level'>('O-Level');
+  const [section, setSection] = useState('');
   const [fileName, setFileName] = useState('');
   const [fileUrl, setFileUrl] = useState('');
+
+  // Section Management State
+  const [newSectionName, setNewSectionName] = useState('');
 
   useEffect(() => {
     loadData();
@@ -29,8 +35,12 @@ export default function ManagePastPapers() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const data = await MockDB.getPastPapers();
-      setPapers(data);
+      const [papersData, sectionsData] = await Promise.all([
+        MockDB.getPastPapers(),
+        MockDB.getALevelSections()
+      ]);
+      setPapers(papersData);
+      setAlevelSections(sectionsData);
     } catch (e) {
       console.error(e);
     } finally {
@@ -42,7 +52,8 @@ export default function ManagePastPapers() {
     setTitle('');
     setSubject('');
     setYear(new Date().getFullYear());
-    setLevel('');
+    setDivision('O-Level');
+    setSection('');
     setFileName('');
     setFileUrl('');
     setEditingPaper(null);
@@ -54,7 +65,8 @@ export default function ManagePastPapers() {
       setTitle(paper.title);
       setSubject(paper.subject);
       setYear(paper.year);
-      setLevel(paper.level);
+      setDivision(paper.division);
+      setSection(paper.section || '');
       setFileName(paper.fileName);
       setFileUrl(paper.fileUrl);
     } else {
@@ -78,7 +90,7 @@ export default function ManagePastPapers() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim() || !subject.trim() || !level.trim()) {
+    if (!title.trim() || !subject.trim() || (division === 'A-Level' && !section)) {
       alert("Please fill in all required fields.");
       return;
     }
@@ -94,7 +106,8 @@ export default function ManagePastPapers() {
         title: title.trim(),
         subject: subject.trim(),
         year,
-        level: level.trim(),
+        division,
+        section: division === 'A-Level' ? section : undefined,
         fileName,
         fileUrl
       };
@@ -131,9 +144,41 @@ export default function ManagePastPapers() {
     }
   };
 
+  const handleAddSection = async () => {
+    if (!newSectionName.trim()) return;
+    setIsProcessing(true);
+    try {
+      await MockDB.saveALevelSection({
+        id: `sec${Date.now()}`,
+        name: newSectionName.trim().toUpperCase()
+      });
+      setNewSectionName('');
+      await loadData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDeleteSection = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this section?")) return;
+    setIsProcessing(true);
+    try {
+      await MockDB.deleteALevelSection(id);
+      await loadData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const filteredPapers = papers.filter(p => 
     p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.subject.toLowerCase().includes(searchTerm.toLowerCase())
+    p.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.division.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.section && p.section.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -143,13 +188,22 @@ export default function ManagePastPapers() {
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-2">Past Papers</h1>
           <p className="text-slate-500 font-medium text-sm sm:text-base">Manage examination archives and past papers.</p>
         </div>
-        <button 
-          onClick={() => handleOpenModal()}
-          className="bg-indigo-600 text-white px-6 py-3.5 sm:px-8 sm:py-4 rounded-2xl font-bold flex items-center justify-center space-x-2 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100"
-        >
-          <Plus className="w-5 h-5" />
-          <span className="text-sm sm:text-base">Add Past Paper</span>
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button 
+            onClick={() => setIsSectionModalOpen(true)}
+            className="bg-white text-slate-700 px-6 py-3.5 sm:px-8 sm:py-4 rounded-2xl font-bold flex items-center justify-center space-x-2 hover:bg-slate-50 transition-all border border-slate-200"
+          >
+            <Settings className="w-5 h-5" />
+            <span className="text-sm sm:text-base">Manage Sections</span>
+          </button>
+          <button 
+            onClick={() => handleOpenModal()}
+            className="bg-indigo-600 text-white px-6 py-3.5 sm:px-8 sm:py-4 rounded-2xl font-bold flex items-center justify-center space-x-2 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="text-sm sm:text-base">Add Past Paper</span>
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-[1.5rem] sm:rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden min-h-[400px]">
@@ -178,7 +232,7 @@ export default function ManagePastPapers() {
                 <tr className="bg-slate-50">
                   <th className="px-6 sm:px-8 py-4 sm:py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Paper</th>
                   <th className="px-6 sm:px-8 py-4 sm:py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Subject / Year</th>
-                  <th className="px-6 sm:px-8 py-4 sm:py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Level</th>
+                  <th className="px-6 sm:px-8 py-4 sm:py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Division / Section</th>
                   <th className="px-6 sm:px-8 py-4 sm:py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Actions</th>
                 </tr>
               </thead>
@@ -203,9 +257,16 @@ export default function ManagePastPapers() {
                       </div>
                     </td>
                     <td className="px-6 sm:px-8 py-5 sm:py-6">
-                      <span className="bg-indigo-50 text-indigo-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-indigo-100 whitespace-nowrap">
-                        {paper.level}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className="bg-indigo-50 text-indigo-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-indigo-100 whitespace-nowrap w-fit">
+                          {paper.division}
+                        </span>
+                        {paper.section && (
+                          <span className="bg-emerald-50 text-emerald-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-emerald-100 whitespace-nowrap w-fit">
+                            {paper.section}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 sm:px-8 py-5 sm:py-6 text-right">
                       <div className="flex items-center justify-end space-x-2">
@@ -313,16 +374,38 @@ export default function ManagePastPapers() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Level</label>
-                <input 
-                  required
-                  type="text" 
-                  value={level}
-                  onChange={(e) => setLevel(e.target.value)}
-                  className="w-full px-5 py-3 sm:px-6 sm:py-4 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium transition-all text-sm sm:text-base"
-                  placeholder="e.g. Senior 6"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Division</label>
+                  <select 
+                    required
+                    value={division}
+                    onChange={(e) => {
+                      setDivision(e.target.value as 'O-Level' | 'A-Level');
+                      if (e.target.value === 'O-Level') setSection('');
+                    }}
+                    className="w-full px-5 py-3 sm:px-6 sm:py-4 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium transition-all text-sm sm:text-base"
+                  >
+                    <option value="O-Level">O-Level</option>
+                    <option value="A-Level">A-Level</option>
+                  </select>
+                </div>
+                {division === 'A-Level' && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Section</label>
+                    <select 
+                      required
+                      value={section}
+                      onChange={(e) => setSection(e.target.value)}
+                      className="w-full px-5 py-3 sm:px-6 sm:py-4 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium transition-all text-sm sm:text-base"
+                    >
+                      <option value="">Select Section</option>
+                      {alevelSections.map(sec => (
+                        <option key={sec.id} value={sec.name}>{sec.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -359,6 +442,55 @@ export default function ManagePastPapers() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Section Management Modal */}
+      {isSectionModalOpen && (
+        <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-2xl font-black text-slate-900">A-Level Sections</h2>
+              <button onClick={() => setIsSectionModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-900 transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={newSectionName}
+                  onChange={(e) => setNewSectionName(e.target.value)}
+                  placeholder="New section (e.g. PCB)"
+                  className="flex-1 px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-50 font-medium text-sm"
+                />
+                <button 
+                  onClick={handleAddSection}
+                  disabled={isProcessing || !newSectionName.trim()}
+                  className="bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-50"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                {alevelSections.map(sec => (
+                  <div key={sec.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <span className="font-bold text-slate-700">{sec.name}</span>
+                    <button 
+                      onClick={() => handleDeleteSection(sec.id)}
+                      className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+                {alevelSections.length === 0 && (
+                  <p className="text-center text-slate-400 text-sm py-4">No sections defined.</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

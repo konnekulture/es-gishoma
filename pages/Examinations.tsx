@@ -1,21 +1,28 @@
 
 import React, { useState, useEffect } from 'react';
-import { ClipboardList, Award, Calendar, FileText, CheckCircle2, AlertCircle, Download, Search, Loader2 } from 'lucide-react';
+import { ClipboardList, Award, Calendar, FileText, CheckCircle2, AlertCircle, Download, Search, Loader2, Filter, ChevronRight } from 'lucide-react';
 import { MockDB } from '../services/mockDb';
-import { PastPaper } from '../types';
+import { PastPaper, ALevelSection } from '../types';
 
 export default function Examinations() {
   const [pastPapers, setPastPapers] = useState<PastPaper[]>([]);
+  const [alevelSections, setAlevelSections] = useState<ALevelSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeDivision, setActiveDivision] = useState<'O-Level' | 'A-Level'>('O-Level');
+  const [activeSection, setActiveSection] = useState<string>('All');
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await MockDB.getPastPapers();
-        setPastPapers(data);
+        const [papers, sections] = await Promise.all([
+          MockDB.getPastPapers(),
+          MockDB.getALevelSections()
+        ]);
+        setPastPapers(papers);
+        setAlevelSections(sections);
       } catch (e) {
-        console.error("Failed to load past papers", e);
+        console.error("Failed to load data", e);
       } finally {
         setLoading(false);
       }
@@ -23,50 +30,12 @@ export default function Examinations() {
     loadData();
   }, []);
 
-  const filteredPapers = pastPapers.filter(p => 
-    p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.level.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  const examGuidelines = [
-    {
-      title: "Preparation",
-      description: "Students must arrive at the examination hall at least 30 minutes before the scheduled start time.",
-      icon: Calendar
-    },
-    {
-      title: "Materials",
-      description: "Only approved stationery and calculators are allowed. Mobile phones and smartwatches are strictly prohibited.",
-      icon: FileText
-    },
-    {
-      title: "Conduct",
-      description: "Silence must be maintained throughout the examination. Any form of malpractice will lead to immediate disqualification.",
-      icon: AlertCircle
-    }
-  ];
-
-  const upcomingExams = [
-    {
-      subject: "Advanced Mathematics",
-      date: "May 15, 2024",
-      time: "09:00 AM - 12:00 PM",
-      level: "Senior 6"
-    },
-    {
-      subject: "Computer Science",
-      date: "May 17, 2024",
-      time: "02:00 PM - 05:00 PM",
-      level: "Senior 5 & 6"
-    },
-    {
-      subject: "Physics Practical",
-      date: "May 20, 2024",
-      time: "08:30 AM - 11:30 AM",
-      level: "Senior 4"
-    }
-  ];
-
+  const filteredPapers = pastPapers.filter(p => {
+    const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDivision = p.division === activeDivision;
+    const matchesSection = activeDivision === 'O-Level' || activeSection === 'All' || p.section === activeSection;
+    return matchesSearch && matchesDivision && matchesSection;
+  });
   return (
     <div className="animate-in fade-in duration-500 bg-slate-50 min-h-screen">
       {/* Hero Section */}
@@ -79,111 +48,83 @@ export default function Examinations() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 -mt-24 relative z-10 pb-24">
-        {/* Guidelines Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          {examGuidelines.map((guide, idx) => (
-            <div key={idx} className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 hover:shadow-2xl transition-all group">
-              <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <guide.icon className="w-7 h-7" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3 brand-font">{guide.title}</h3>
-              <p className="text-slate-500 text-sm leading-relaxed font-medium">
-                {guide.description}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Upcoming Schedule */}
-          <div className="bg-white p-8 sm:p-10 rounded-[3rem] shadow-xl border border-slate-100">
-            <div className="flex items-center space-x-4 mb-8">
-              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <h2 className="text-3xl font-bold text-slate-900 brand-font">Upcoming Schedule</h2>
-            </div>
-            
-            <div className="space-y-6">
-              {upcomingExams.map((exam, idx) => (
-                <div key={idx} className="flex items-center justify-between p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-200 transition-colors">
-                  <div>
-                    <h4 className="font-bold text-slate-900">{exam.subject}</h4>
-                    <p className="text-sm text-slate-500 font-medium">{exam.level} • {exam.time}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-indigo-600 font-black text-xs uppercase tracking-widest">{exam.date}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Results & Grading */}
-          <div className="bg-slate-900 p-8 sm:p-10 rounded-[3rem] shadow-xl text-white">
-            <div className="flex items-center space-x-4 mb-8">
-              <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center">
-                <Award className="w-6 h-6" />
-              </div>
-              <h2 className="text-3xl font-bold brand-font">Grading System</h2>
-            </div>
-            
-            <p className="text-slate-400 mb-8 font-medium">
-              ES GISHOMA follows the national grading standards to ensure fair and transparent assessment of student performance.
-            </p>
-
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { grade: 'A', desc: 'Excellent (80-100)' },
-                { grade: 'B', desc: 'Very Good (70-79)' },
-                { grade: 'C', desc: 'Good (60-69)' },
-                { grade: 'D', desc: 'Satisfactory (50-59)' },
-                { grade: 'E', desc: 'Pass (40-49)' },
-                { grade: 'F', desc: 'Fail (Below 40)' },
-              ].map((item, idx) => (
-                <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center space-x-4">
-                  <span className="text-2xl font-black text-indigo-400">{item.grade}</span>
-                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">{item.desc}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-10 p-6 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-start space-x-4">
-              <CheckCircle2 className="w-6 h-6 text-indigo-400 shrink-0" />
-              <div>
-                <h4 className="font-bold mb-1">Results Portal</h4>
-                <p className="text-sm text-slate-300">Students can access their detailed performance reports through the student portal using their unique ID.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Past Papers Section */}
-        <div className="mt-20">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+        <div className="bg-white p-8 sm:p-12 rounded-[3rem] shadow-2xl border border-slate-100">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-12">
             <div>
-              <h2 className="text-4xl font-bold text-slate-900 brand-font mb-2">Past Papers</h2>
-              <p className="text-slate-500 font-medium">Access our archive of previous national and internal examinations.</p>
+              <h2 className="text-4xl font-black text-slate-900 brand-font mb-2">Past Examinations</h2>
+              <p className="text-slate-500 font-medium">Access our comprehensive archive of previous examinations.</p>
             </div>
-            <div className="relative w-full md:w-96">
+            
+            <div className="relative w-full lg:w-96">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
               <input 
                 type="text" 
-                placeholder="Search by subject, year or level..." 
+                placeholder="Search by exam title..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none bg-white font-medium shadow-sm"
+                className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none bg-slate-50 font-medium"
               />
             </div>
           </div>
 
+          {/* Division Tabs */}
+          <div className="flex flex-wrap gap-4 mb-10">
+            {(['O-Level', 'A-Level'] as const).map(div => (
+              <button
+                key={div}
+                onClick={() => {
+                  setActiveDivision(div);
+                  setActiveSection('All');
+                }}
+                className={`px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${
+                  activeDivision === div 
+                  ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-200 scale-105' 
+                  : 'bg-slate-50 text-slate-400 hover:bg-slate-100 border border-slate-100'
+                }`}
+              >
+                {div}
+              </button>
+            ))}
+          </div>
+
+          {/* A-Level Sections Filter */}
+          {activeDivision === 'A-Level' && (
+            <div className="flex flex-wrap gap-3 mb-10 p-6 bg-indigo-50/50 rounded-[2rem] border border-indigo-100">
+              <div className="w-full text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-2 px-2">Filter by Section</div>
+              <button
+                onClick={() => setActiveSection('All')}
+                className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  activeSection === 'All' 
+                  ? 'bg-indigo-600 text-white shadow-lg' 
+                  : 'bg-white text-slate-500 hover:bg-indigo-100 border border-slate-100'
+                }`}
+              >
+                All Sections
+              </button>
+              {alevelSections.map(sec => (
+                <button
+                  key={sec.id}
+                  onClick={() => setActiveSection(sec.name)}
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeSection === sec.name 
+                    ? 'bg-indigo-600 text-white shadow-lg' 
+                    : 'bg-white text-slate-500 hover:bg-indigo-100 border border-slate-100'
+                  }`}
+                >
+                  {sec.name}
+                </button>
+              ))}
+            </div>
+          )}
+
           {loading ? (
-            <div className="py-20 flex flex-col items-center justify-center space-y-4">
+            <div className="py-32 flex flex-col items-center justify-center space-y-4">
                <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Retrieving Archives...</p>
             </div>
           ) : filteredPapers.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
               {filteredPapers.map((paper) => (
                 <div key={paper.id} className="bg-white p-8 rounded-[2.5rem] shadow-sm hover:shadow-2xl border border-slate-100 group transition-all duration-500 flex flex-col">
                   <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -191,22 +132,30 @@ export default function Examinations() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-indigo-600 font-black tracking-widest uppercase text-[10px]">{paper.subject}</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-indigo-600 font-black tracking-widest uppercase text-[10px]">{paper.division}</span>
+                        {paper.section && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-indigo-400 font-black tracking-widest uppercase text-[10px]">{paper.section}</span>
+                          </>
+                        )}
+                      </div>
                       <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">{paper.year}</span>
                     </div>
-                    <h3 className="text-2xl font-bold text-slate-900 mb-4 brand-font">{paper.title}</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed mb-6 font-medium">
-                      Official past paper for {paper.level} students. Useful for revision and exam preparation.
-                    </p>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-4 brand-font leading-tight">{paper.title}</h3>
+                    <div className="flex items-center space-x-2 mb-6">
+                      <span className="px-3 py-1 bg-slate-100 rounded-full text-[9px] font-black uppercase tracking-widest text-slate-500">{paper.subject}</span>
+                    </div>
                   </div>
                   <div className="pt-6 border-t border-slate-50 mt-auto flex items-center justify-between">
-                    <div className="text-xs text-slate-400 font-bold uppercase truncate max-w-[120px]">{paper.fileName}</div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase truncate max-w-[120px]">{paper.fileName}</div>
                     <a 
                       href={paper.fileUrl} 
                       download={paper.fileName}
                       className="flex items-center space-x-2 text-indigo-600 font-bold group/btn hover:underline"
                     >
-                      <span>Download PDF</span>
+                      <span className="text-sm">Download</span>
                       <Download className="w-4 h-4 group-hover/btn:translate-y-1 transition-transform" />
                     </a>
                   </div>
@@ -214,10 +163,10 @@ export default function Examinations() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-32 bg-white rounded-[3rem] shadow-xl border border-slate-100">
+            <div className="text-center py-32 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
               <FileText className="w-16 h-16 text-slate-200 mx-auto mb-6" />
               <h3 className="text-2xl font-bold text-slate-400 brand-font">No past papers found</h3>
-              <p className="text-slate-400 mt-2 max-w-sm mx-auto font-medium">Try adjusting your search term or check back later.</p>
+              <p className="text-slate-400 mt-2 max-w-sm mx-auto font-medium">Try adjusting your filters or search term.</p>
             </div>
           )}
         </div>

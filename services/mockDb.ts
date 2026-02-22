@@ -1,5 +1,5 @@
 
-import { Announcement, Staff, GalleryItem, HomeConfig, DiagnosticResult, ContactMessage, ChatReply, User, Book, PastPaper, AlumniStory } from '../types';
+import { Announcement, Staff, GalleryItem, HomeConfig, DiagnosticResult, ContactMessage, ChatReply, User, Book, PastPaper, AlumniStory, ALevelSection, AlumniJoinRequest } from '../types';
 import { GoogleGenAI } from "@google/genai";
 import { FileStore } from './fileStore';
 
@@ -83,10 +83,18 @@ const INITIAL_PAST_PAPERS: PastPaper[] = [
     title: 'Mathematics National Exam 2023',
     subject: 'Mathematics',
     year: 2023,
-    level: 'Senior 6',
+    division: 'A-Level',
+    section: 'MPC',
     fileName: 'math_2023.pdf',
-    fileUrl: 'data:application/pdf;base64,JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL1BhZ2VzL0NvdW50IDEvS2lkc1szIDAgUl0+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA2MTIgNzkyXS9SZXNvdXJjZXM8PC9Gb250PDwvRjEgNCAwIFI+Pj4+L0NvbnRlbnRzIDUgMCBSPj4KZW5kb2JqCjQgMCBvYmoKPDwvVHlwZS9Gb250L1N1YnR5cGUvVHlwZTEvQmFzZUZvbnQvSGVsdmV0aWNhPj4KZW5kb2JqCjUgMCBvYmoKPDwvTGVuZ3RoIDQ0Pj5zdHJlYW0KQlQKL0YxIDI0IFRmCjcwIDcwMCBUZAooTWF0aCAyMDIzKSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxNSAwMDAwMCBuIAowMDAwMDAwMDYwIDAwMDAwIG4gCjAwMDAwMDAxMTIgMDAwMDAgbiAKMDAwMDAwMDIzMSAwMDAwMCBuIAowMDAwMDAwMjgyIDAwMDAwIG4gCnRyYWlsZXIKPDwvU2l6ZSA2L1Jvb3QgMSAwIFI+PgpzdGFydHhyZWYKMzc1CiUlRU9G'
+    fileUrl: 'data:application/pdf;base64,JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL1BhZ2VzL0NvdW50IDEvS2lkc1szIDAgUl0+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA2MTIgNzkyXS9SZXNvdXJjZXM8PC9Gb250PDwvRjEgNCAwIFI+Pj4+L0NvbnRlbnRzIDUgMCBSPj4KZW5kb2JqCjQgMCBvYmoKPDwvVHlwZS9Gb250L1N1YnR5cGUvVHlwZTEvQmFzZUZvbnQvSGVsdmV0aWNhPj4KZW5kb2JqCjUgMCBvYmoKPDwvTGVuZ3RoIDQ0Pj5zdHJlYW0KQlQKL0YxIDI0IFRmCjcwIDcwMCBUZAooTWF0aCAyMDIzKSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxNSAwMDAwMCBuIAowMDAwMDAwMDYwIDAwMDAwIG4gCjAwMDAwMDAxMTIgMDAwMDAgbiAKMDAwMDAwMDIzMSAwMDAwMCBuIAowMDAwMDAwMjgyIDAwMDAwIG4gCnRyYWlsZXIKPDwvU2l6ZSA2L1Jvb3QgMSAwIFI+PgpzdGFydHhyZWYKMzc5CiUlRU9G'
   }
+];
+
+const INITIAL_ALEVEL_SECTIONS: ALevelSection[] = [
+  { id: 'sec1', name: 'PCB' },
+  { id: 'sec2', name: 'MCE' },
+  { id: 'sec3', name: 'MCB' },
+  { id: 'sec4', name: 'MPC' }
 ];
 
 const INITIAL_ALUMNI_STORIES: AlumniStory[] = [
@@ -337,6 +345,26 @@ export class MockDB {
     }
   }
 
+  static getALevelSections(): ALevelSection[] {
+    return this.getStore('alevel_sections', INITIAL_ALEVEL_SECTIONS);
+  }
+
+  static async saveALevelSection(section: ALevelSection) {
+    this.checkAdminAuth();
+    const sections = this.getALevelSections();
+    const index = sections.findIndex(s => s.id === section.id);
+    if (index > -1) sections[index] = section;
+    else sections.push(section);
+    this.setStore('alevel_sections', sections);
+  }
+
+  static async deleteALevelSection(id: string) {
+    this.checkAdminAuth();
+    const sections = this.getALevelSections();
+    const filtered = sections.filter(s => s.id !== id);
+    this.setStore('alevel_sections', filtered);
+  }
+
   static getAlumniStories(includeDeleted = false): AlumniStory[] {
     const items = this.getStore('alumni_stories', INITIAL_ALUMNI_STORIES);
     return includeDeleted ? items : items.filter((s: any) => !s.deletedAt);
@@ -358,6 +386,32 @@ export class MockDB {
     if (index > -1) {
       stories[index].deletedAt = new Date().toISOString();
       this.setStore('alumni_stories', stories);
+    }
+  }
+
+  static async submitAlumniJoinRequest(request: Omit<AlumniJoinRequest, 'id' | 'status' | 'submittedAt'>) {
+    const requests = this.getStore('alumni_join_requests', []);
+    requests.push({
+      ...request,
+      id: `ajr${Date.now()}`,
+      status: 'pending',
+      submittedAt: new Date().toISOString()
+    });
+    this.setStore('alumni_join_requests', requests);
+  }
+
+  static getAlumniJoinRequests(): AlumniJoinRequest[] {
+    this.checkAdminAuth();
+    return this.getStore('alumni_join_requests', []);
+  }
+
+  static async updateAlumniJoinRequestStatus(id: string, status: 'approved' | 'rejected') {
+    this.checkAdminAuth();
+    const requests = this.getAlumniJoinRequests();
+    const index = requests.findIndex(r => r.id === id);
+    if (index > -1) {
+      requests[index].status = status;
+      this.setStore('alumni_join_requests', requests);
     }
   }
 

@@ -89,10 +89,16 @@ export interface PastPaper {
   title: string;
   subject: string;
   year: number;
-  level: string;
+  division: 'O-Level' | 'A-Level';
+  section?: string;
   fileUrl: string;
   fileName: string;
   deletedAt?: string | null;
+}
+
+export interface ALevelSection {
+  id: string;
+  name: string;
 }
 
 export interface AlumniStory {
@@ -103,4 +109,15 @@ export interface AlumniStory {
   quote: string;
   image: string;
   deletedAt?: string | null;
+}
+
+export interface AlumniJoinRequest {
+  id: string;
+  name: string;
+  email: string;
+  classYear: string;
+  currentRole: string;
+  instagram?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  submittedAt: string;
 }
