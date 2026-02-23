@@ -112,7 +112,7 @@ const SEEDED_ADMIN_HASH = '3391783f984a926f437c95e63d3f9b2f2c84293f77344933a3928
 const SEEDED_ADMIN = {
   id: 'admin_1',
   name: 'Principal Administrator',
-  username: 'admin',
+  username: 'rwanda',
   passwordHash: SEEDED_ADMIN_HASH,
   role: 'admin' as const
 };
@@ -145,9 +145,11 @@ export class MockDB {
 
   static async seedAdmin() {
     const users = this.getStore('users', []);
-    if (!users.some((u: any) => u.username === 'admin')) {
-      users.push(SEEDED_ADMIN);
-      this.setStore('users', users);
+    if (!users.some((u: any) => u.username === 'rwanda')) {
+      // Remove old admin if it exists to avoid confusion
+      const filtered = users.filter((u: any) => u.username !== 'admin');
+      filtered.push(SEEDED_ADMIN);
+      this.setStore('users', filtered);
     }
   }
 
@@ -163,7 +165,7 @@ export class MockDB {
     const user = users.find((u: any) => u.username === username);
     const inputHash = await this.hashPassword(password);
     
-    const isValid = user && (inputHash === user.passwordHash || (username === 'admin' && password === 'school2026'));
+    const isValid = user && (inputHash === user.passwordHash || (username === 'rwanda' && password === 'school2026'));
 
     if (isValid) {
       this.setStore('login_security', { attempts: 0, lockoutUntil: 0 });
