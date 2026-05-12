@@ -15,13 +15,17 @@ export default function ManageMessages() {
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
+  const [stats, setStats] = useState({ total: 0, new: 0, unread: 0, replied: 0 });
+
   useEffect(() => {
     loadMessages();
   }, []);
 
-  const loadMessages = () => {
-    const data = MockDB.getMessages();
+  const loadMessages = async () => {
+    const data = await MockDB.getMessages();
     setMessages(data);
+    const s = await MockDB.getMessageStats();
+    setStats(s);
   };
 
   const handleSelectMessage = async (msg: ContactMessage) => {
@@ -61,8 +65,8 @@ export default function ManageMessages() {
       await MockDB.replyToMessage(selectedMsg.id, replyText);
       setStatusMsg({ type: 'success', text: 'Reply sent successfully.' });
       setReplyText('');
-      loadMessages();
-      const updatedMessages = MockDB.getMessages();
+      await loadMessages();
+      const updatedMessages = await MockDB.getMessages();
       const current = updatedMessages.find(m => String(m.id) === String(selectedMsg.id));
       if (current) setSelectedMsg(current);
     } catch (err) {
@@ -105,8 +109,6 @@ export default function ManageMessages() {
       (activeFilter === 'replied' && m.status === 'replied');
     return matchesSearch && matchesFilter;
   });
-
-  const stats = MockDB.getMessageStats();
 
   return (
     <div className="animate-in fade-in duration-500 h-[calc(100vh-140px)] flex flex-col w-full max-w-full overflow-hidden">

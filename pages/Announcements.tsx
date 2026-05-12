@@ -10,7 +10,11 @@ export default function Announcements() {
   const [activeCategory, setActiveCategory] = useState('All');
 
   useEffect(() => {
-    setAnns(MockDB.getAnnouncements());
+    const loadAnns = async () => {
+      const data = await MockDB.getAnnouncements();
+      setAnns(data);
+    };
+    loadAnns();
   }, []);
 
   const categories = ['All', 'Academic', 'Event', 'Urgent', 'News'];

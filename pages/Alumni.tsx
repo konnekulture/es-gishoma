@@ -22,9 +22,13 @@ export default function Alumni() {
   });
 
   useEffect(() => {
-    const data = MockDB.getAlumniStories();
-    setStories(data);
-    setLoading(false);
+    const loadStories = async () => {
+      setLoading(true);
+      const data = await MockDB.getAlumniStories();
+      setStories(data);
+      setLoading(false);
+    };
+    loadStories();
   }, []);
 
   const handleJoinSubmit = async (e: React.FormEvent) => {

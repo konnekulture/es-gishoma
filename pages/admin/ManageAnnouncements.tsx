@@ -24,8 +24,9 @@ export default function ManageAnnouncements() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    setAnns(MockDB.getAnnouncements());
+  const loadData = async () => {
+    const data = await MockDB.getAnnouncements();
+    setAnns(data);
   };
 
   const resetForm = () => {

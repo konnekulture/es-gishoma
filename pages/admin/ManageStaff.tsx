@@ -25,8 +25,9 @@ export default function ManageStaff() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    setStaff(MockDB.getStaff());
+  const loadData = async () => {
+    const data = await MockDB.getStaff();
+    setStaff(data);
   };
 
   const resetForm = () => {

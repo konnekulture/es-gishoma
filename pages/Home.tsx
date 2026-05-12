@@ -8,12 +8,14 @@ import { Announcement, HomeConfig, GalleryItem } from '../types';
 export default function Home() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [featuredGallery, setFeaturedGallery] = useState<GalleryItem[]>([]);
-  const [config, setConfig] = useState<HomeConfig>(MockDB.getHomeConfig());
+  const [config, setConfig] = useState<HomeConfig | null>(null);
 
   useEffect(() => {
-    // FIX: getGallery is async and returns a promise. We need to await it.
     const loadAsyncData = async () => {
-      setAnnouncements(MockDB.getAnnouncements().filter(a => a.isFeatured).slice(0, 3));
+      const homeConfig = await MockDB.getHomeConfig();
+      setConfig(homeConfig);
+      const allAnns = await MockDB.getAnnouncements();
+      setAnnouncements(allAnns.filter(a => a.isFeatured).slice(0, 3));
       const gallery = await MockDB.getGallery();
       setFeaturedGallery(gallery.filter(g => g.isFeatured).slice(0, 4));
     };
@@ -32,16 +34,16 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative min-h-[70vh] sm:min-h-[85vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={config.heroImage} alt="Hero" className="w-full h-full object-cover" />
+          {config?.heroImage && <img src={config.heroImage} alt="Hero" className="w-full h-full object-cover" />}
           <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/80 to-transparent"></div>
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10 py-16 sm:py-20">
           <div className="max-w-2xl">
             <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight brand-font">
-              {config.heroTitle}
+              {config?.heroTitle}
             </h1>
             <p className="text-base sm:text-xl text-slate-200 mb-8 sm:mb-10 leading-relaxed font-light">
-              {config.heroSubtitle}
+              {config?.heroSubtitle}
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/about" className="px-6 py-3.5 sm:px-8 sm:py-4 bg-indigo-600 text-white rounded-full font-bold hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center group">
@@ -75,7 +77,7 @@ export default function Home() {
               <span className="text-indigo-600 font-black tracking-[0.2em] uppercase text-xs mb-3 sm:mb-4 block">Welcome to ES GISHOMA</span>
               <h2 className="text-3xl sm:text-4xl font-bold mb-4 sm:mb-6 text-slate-900 leading-tight brand-font">Investing In Our Student's Future</h2>
               <p className="text-slate-600 text-sm sm:text-lg leading-relaxed mb-8 font-medium">
-                {config.schoolBrief}
+                {config?.schoolBrief}
               </p>
               <div className="grid grid-cols-2 gap-4 sm:gap-6">
                 {stats.map((stat, i) => (

@@ -237,7 +237,10 @@ const Navbar: React.FC = () => {
 const TrafficTracker: React.FC = () => {
   const location = useLocation();
   useEffect(() => {
-    MockDB.trackPageView(location.pathname);
+    const track = async () => {
+      await MockDB.trackPageView(location.pathname);
+    };
+    track();
   }, [location.pathname]);
   return null;
 };

@@ -8,7 +8,11 @@ export default function StaffPage() {
   const [staff, setStaff] = useState<Staff[]>([]);
 
   useEffect(() => {
-    setStaff(MockDB.getStaff());
+    const loadStaff = async () => {
+      const data = await MockDB.getStaff();
+      setStaff(data);
+    };
+    loadStaff();
   }, []);
 
   return (

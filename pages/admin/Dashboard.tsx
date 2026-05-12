@@ -26,13 +26,16 @@ export default function Dashboard() {
     setIsMounted(true);
     // FIX: getGallery is async and returns a promise. We need an async function to await it.
     const loadStats = async () => {
-      const tData = MockDB.getTrafficStats();
-      const msgStats = MockDB.getMessageStats();
+      const tData = await MockDB.getTrafficStats();
+      const msgStats = await MockDB.getMessageStats();
       const galleryItems = await MockDB.getGallery();
+      const announcements = await MockDB.getAnnouncements();
+      const staff = await MockDB.getStaff();
+      
       setTrafficStats(tData);
       setStats({
-        announcements: MockDB.getAnnouncements().length,
-        staff: MockDB.getStaff().length,
+        announcements: announcements.length,
+        staff: staff.length,
         gallery: galleryItems.length,
         totalVisitors: tData.totalVisitors,
         activeVisitors: tData.activeVisitors,
