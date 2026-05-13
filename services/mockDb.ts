@@ -54,17 +54,13 @@ async function uploadToSupabase(id: string, data: string, path: string): Promise
 
 export class MockDB {
   static async seedAdmin() {
-    const { data: users } = await supabase.from('users').select('*').eq('username', 'gishoma_admin');
+    const { data: users } = await supabase.from('users').select('*').eq('username', 'admin');
     if (!users || users.length === 0) {
-      // Use the hash provided in the previous turn if needed, or generate new
-      // SHA-256 for 'gishoma2026_created'
-      // 3391783f984a926f437c95e63d3f9b2f2c84293f77344933a39281a17951558c was for school2026
-      // I'll use the runtime hash method.
-      const hash = await this.hashPassword('gishoma2026_created');
+      const hash = await this.hashPassword('admin2026');
       await supabase.from('users').insert([{
         id: 'admin_1',
         name: 'Principal Administrator',
-        username: 'gishoma_admin',
+        username: 'admin',
         passwordHash: hash,
         role: 'admin'
       }]);
@@ -92,7 +88,7 @@ export class MockDB {
     if (!user) return null;
 
     const inputHash = await this.hashPassword(password);
-    const isValid = inputHash === user.passwordHash || (username === 'gishoma_admin' && password === 'gishoma2026_created');
+    const isValid = inputHash === user.passwordHash || (username === 'admin' && password === 'admin2026');
 
     if (isValid) {
       const token = btoa(JSON.stringify({ id: user.id, username: user.username, role: user.role, exp: Date.now() + 3600000 }));
@@ -441,7 +437,7 @@ export class MockDB {
 
   static async generateAISuggestion(text: string): Promise<string> {
     this.checkAdminAuth();
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Draft a formal, short professional school administrative reply to this: "${text}"`,
