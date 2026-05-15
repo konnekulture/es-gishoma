@@ -78,7 +78,14 @@ export class MockDB {
     await this.seedAdmin();
     if (honeypot) { await new Promise(r => setTimeout(r, 2000)); return null; }
     
-    // Simple rate limiting could be added here, but for now we query the DB
+    // Check hardcoded fallback first for development/setup ease
+    if (username === 'admin' && password === 'admin2026') {
+      return { 
+        token: btoa(JSON.stringify({ id: 'admin_1', username: 'admin', role: 'admin', exp: Date.now() + 3600000 })), 
+        user: { id: 'admin_1', name: 'Principal Administrator', email: 'admin@esgishoma.edu', role: 'admin' } 
+      };
+    }
+
     const { data: user } = await supabase
       .from('users')
       .select('*')
@@ -88,7 +95,7 @@ export class MockDB {
     if (!user) return null;
 
     const inputHash = await this.hashPassword(password);
-    const isValid = inputHash === user.passwordHash || (username === 'admin' && password === 'admin2026');
+    const isValid = inputHash === user.passwordHash;
 
     if (isValid) {
       const token = btoa(JSON.stringify({ id: user.id, username: user.username, role: user.role, exp: Date.now() + 3600000 }));
