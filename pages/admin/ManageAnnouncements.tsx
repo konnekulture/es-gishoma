@@ -77,7 +77,7 @@ export default function ManageAnnouncements() {
         date: editingAnn ? editingAnn.date : new Date().toISOString().split('T')[0]
       };
       await MockDB.saveAnnouncement(newAnn);
-      loadData();
+      await loadData();
       setIsModalOpen(false);
       resetForm();
     } catch (err) {
@@ -97,7 +97,7 @@ export default function ManageAnnouncements() {
     setIsProcessing(true);
     try {
       await MockDB.deleteAnnouncement(deletingId);
-      loadData();
+      await loadData();
       setIsDeleteModalOpen(false);
       setDeletingId(null);
     } catch (err) {

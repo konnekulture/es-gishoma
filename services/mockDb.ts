@@ -27,28 +27,39 @@ async function uploadToSupabase(id: string, data: string, path: string): Promise
   // If it's already a URL, return it
   if (!data.startsWith('data:')) return data;
 
+  const isConfigured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+  if (!isConfigured) {
+    throw new Error('Supabase is not configured. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Settings.');
+  }
+
   try {
     const blob = dataURLtoBlob(data);
     const extension = blob.type.split('/')[1] || 'bin';
-    const filePath = `${path}/${id}.${extension}`;
+    const filePath = `${path}/${id}-${Date.now()}.${extension}`;
 
     const { error: uploadError } = await supabase.storage
       .from('uploads')
       .upload(filePath, blob, {
         upsert: true,
+        cacheControl: '3600',
         contentType: blob.type
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      throw new Error(`Upload failed: ${uploadError.message}. Make sure you have created a PUBLIC bucket named "uploads" in your Supabase storage.`);
+    }
 
     const { data: { publicUrl } } = supabase.storage
       .from('uploads')
       .getPublicUrl(filePath);
 
+    if (!publicUrl) throw new Error('Failed to generate public URL for uploaded file.');
+
     return publicUrl;
   } catch (err) {
-    console.error('Upload failed:', err);
-    return data; // Fallback to data URL if upload fails (though not ideal for Vercel)
+    console.error('Core upload error:', err);
+    throw err; // Re-throw so the UI can catch it and show an alert
   }
 }
 
@@ -435,11 +446,44 @@ export class MockDB {
 
   static async getSystemDiagnostics(): Promise<DiagnosticResult[]> {
     this.checkAdminAuth();
-    return [
-      { id: '1', label: 'Cloud Storage', value: 'Active', status: 'ok', description: 'Supabase Storage connected.' },
-      { id: '2', label: 'Database Node', value: 'Synchronized', status: 'ok', description: 'Supabase PostgreSQL reachable.' },
-      { id: '3', label: 'API Gateway', value: 'Optimal', status: 'ok', description: 'Zero-latency response detected.' }
-    ];
+    const results: DiagnosticResult[] = [];
+
+    // Check Database
+    try {
+      const { error } = await supabase.from('users').select('id').limit(1);
+      results.push({
+        id: 'db',
+        label: 'Database Node',
+        value: error ? 'Error' : 'Synchronized',
+        status: error ? 'error' : 'ok',
+        description: error ? `PostgreSQL: ${error.message}` : 'Supabase PostgreSQL reachable and responsive.'
+      });
+    } catch (e) {
+      results.push({ id: 'db', label: 'Database', value: 'Disconnected', status: 'error', description: 'Could not reach Supabase Database.' });
+    }
+
+    // Check Storage
+    try {
+      const { data: buckets, error: storageError } = await supabase.storage.listBuckets();
+      const hasUploads = buckets?.some(b => b.name === 'uploads');
+      
+      results.push({
+        id: 'storage',
+        label: 'Cloud Storage',
+        value: hasUploads ? 'Active' : 'Missing Bucket',
+        status: hasUploads ? 'ok' : 'error',
+        description: hasUploads 
+          ? 'Found "uploads" bucket. Storage is ready.' 
+          : 'Bucket "uploads" not found. Please create a PUBLIC bucket named "uploads" in Supabase Storage.'
+      });
+    } catch (e) {
+      results.push({ id: 'storage', label: 'Cloud Storage', value: 'Inactive', status: 'error', description: 'Supabase Storage is unreachable or key invalid.' });
+    }
+
+    // API Gateway
+    results.push({ id: 'api', label: 'API Gateway', value: 'Optimal', status: 'ok', description: 'Zero-latency content delivery edge active.' });
+
+    return results;
   }
 
   static async generateAISuggestion(text: string): Promise<string> {

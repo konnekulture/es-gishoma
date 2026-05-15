@@ -34,7 +34,7 @@ export default function ManageMessages() {
     if (msg.status === 'new') {
       try {
         await MockDB.markAsRead(msg.id);
-        loadMessages();
+        await loadMessages();
       } catch (e) {
         console.error("Failed to mark as read", e);
       }
@@ -89,7 +89,7 @@ export default function ManageMessages() {
       if (selectedMsg && String(selectedMsg.id) === String(id)) {
         setSelectedMsg(null);
       }
-      loadMessages();
+      await loadMessages();
     } catch (err: any) {
       console.error(err);
       alert(err.message || 'Action Forbidden: Please verify your administrative credentials.');

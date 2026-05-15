@@ -11,18 +11,20 @@ const isConfigured = !!(supabaseUrl && supabaseUrl.startsWith('http') && supabas
  */
 export const supabase = isConfigured 
   ? createClient(supabaseUrl, supabaseAnonKey)
-  : new Proxy({} as any, {
+    : new Proxy({} as any, {
       get: (_, prop) => {
+        const errorResponse = { data: null, error: new Error("Supabase is not configured. Please set environment variables in Settings.") };
+        
         const mockQuery: any = {
           select: () => mockQuery,
-          insert: () => Promise.resolve({ data: [], error: null }),
-          upsert: () => Promise.resolve({ data: [], error: null }),
+          insert: () => Promise.resolve(errorResponse),
+          upsert: () => Promise.resolve(errorResponse),
           update: () => mockQuery,
           delete: () => mockQuery,
           eq: () => mockQuery,
           is: () => mockQuery,
           order: () => mockQuery,
-          single: () => Promise.resolve({ data: null, error: null }),
+          single: () => Promise.resolve(errorResponse),
           limit: () => mockQuery,
           range: () => mockQuery,
           // Make it awaitable
@@ -33,7 +35,7 @@ export const supabase = isConfigured
         if (prop === 'storage') {
           return {
             from: () => ({
-              upload: () => Promise.resolve({ error: new Error("Supabase not configured") }),
+              upload: () => Promise.resolve({ error: new Error("Supabase storage not configured") }),
               getPublicUrl: () => ({ data: { publicUrl: '' } })
             })
           };

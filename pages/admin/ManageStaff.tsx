@@ -80,7 +80,7 @@ export default function ManageStaff() {
         email
       };
       await MockDB.saveStaff(newMember);
-      loadData();
+      await loadData();
       setIsModalOpen(false);
       resetForm();
     } catch (err) {
@@ -100,7 +100,7 @@ export default function ManageStaff() {
     setIsProcessing(true);
     try {
       await MockDB.deleteStaff(deletingId);
-      loadData();
+      await loadData();
       setIsDeleteModalOpen(false);
       setDeletingId(null);
     } catch (err) {

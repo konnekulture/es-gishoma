@@ -17,6 +17,7 @@ export default function Dashboard() {
     newMessages: 0
   });
 
+  const [isSupabaseConfigured, setIsSupabaseConfigured] = useState(true);
   const [trafficStats, setTrafficStats] = useState<TrafficData | null>(null);
   const [diagnosticResults, setDiagnosticResults] = useState<DiagnosticResult[] | null>(null);
   const [isRunningDiagnostics, setIsRunningDiagnostics] = useState(false);
@@ -32,6 +33,9 @@ export default function Dashboard() {
       const announcements = await MockDB.getAnnouncements();
       const staff = await MockDB.getStaff();
       
+      const configured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+      setIsSupabaseConfigured(configured);
+
       setTrafficStats(tData);
       setStats({
         announcements: announcements.length,
@@ -72,6 +76,24 @@ export default function Dashboard() {
 
   return (
     <div className="animate-in fade-in duration-500 w-full overflow-hidden">
+      {!isSupabaseConfigured && (
+        <div className="mb-8 p-6 bg-amber-50 border border-amber-100 rounded-[2rem] flex items-center justify-between shadow-xl shadow-amber-900/5">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-200">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-slate-900 leading-tight">Supabase Not Linked</h3>
+              <p className="text-sm text-slate-600 font-medium">Changes will not persist across redeploys. Link your project in Settings.</p>
+            </div>
+          </div>
+          <div className="hidden sm:block">
+            <div className="px-4 py-2 bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-widest rounded-lg border border-amber-200">
+              Demo Mode Active
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-slate-900 mb-2">Command Center</h1>
