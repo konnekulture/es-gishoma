@@ -140,7 +140,7 @@ export class MockDB {
       query = query.is('deletedAt', null);
     }
     const { data, error } = await query.order('date', { ascending: false });
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return data || [];
   }
 
@@ -156,7 +156,7 @@ export class MockDB {
       if (error.message.includes('row-level security')) {
         throw new Error('Database Access Denied (RLS). Please run the setup SQL and disable RLS or add policies for the "announcements" table.');
       }
-      throw error;
+      throw new Error(error.message);
     }
   }
 
@@ -170,7 +170,7 @@ export class MockDB {
       if (error.message.includes('row-level security')) {
         throw new Error('Action Denied by Security Policy (RLS).');
       }
-      throw error;
+      throw new Error(error.message);
     }
   }
 
@@ -196,7 +196,7 @@ export class MockDB {
       if (error.message.includes('row-level security')) {
         throw new Error('Security Error: Update blocked for "staff" table. Check RLS policies.');
       }
-      throw error;
+      throw new Error(error.message);
     }
   }
 
@@ -208,7 +208,7 @@ export class MockDB {
       .eq('id', id);
     if (error) {
       if (error.message.includes('row-level security')) throw new Error('Delete policy violation.');
-      throw error;
+      throw new Error(error.message);
     }
   }
 
@@ -234,7 +234,7 @@ export class MockDB {
       if (error.message.includes('row-level security')) {
         throw new Error('Database Security Denied: Please run instructions in SUPABASE_SETUP.sql for the "gallery" table.');
       }
-      throw error;
+      throw new Error(error.message);
     }
   }
 
@@ -246,7 +246,7 @@ export class MockDB {
       .eq('id', id);
     if (error) {
       if (error.message.includes('row-level security')) throw new Error('Policy violation on delete.');
-      throw error;
+      throw new Error(error.message);
     }
   }
 
@@ -259,6 +259,7 @@ export class MockDB {
     if (error && error.message.includes('row-level security')) {
        console.warn('RLS blocking read on curriculum_books table');
     }
+    if (error && !error.message.includes('row-level security')) throw new Error(error.message);
     return data || [];
   }
 
@@ -272,7 +273,7 @@ export class MockDB {
       if (error.message.includes('row-level security')) {
         throw new Error('Security Error: Cannot save to "curriculum_books" table.');
       }
-      throw error;
+      throw new Error(error.message);
     }
   }
 
@@ -282,7 +283,7 @@ export class MockDB {
       .from('curriculum_books')
       .update({ deletedAt: new Date().toISOString() })
       .eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   static async getPastPapers(includeDeleted = false): Promise<PastPaper[]> {
@@ -294,6 +295,7 @@ export class MockDB {
     if (error && error.message.includes('row-level security')) {
        console.warn('RLS blocking read on past_papers table');
     }
+    if (error && !error.message.includes('row-level security')) throw new Error(error.message);
     return data || [];
   }
 
@@ -307,7 +309,7 @@ export class MockDB {
       if (error.message.includes('row-level security')) {
         throw new Error('Security Error: Cannot save to "past_papers" table.');
       }
-      throw error;
+      throw new Error(error.message);
     }
   }
 
@@ -317,7 +319,7 @@ export class MockDB {
       .from('past_papers')
       .update({ deletedAt: new Date().toISOString() })
       .eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   static async getALevelSections(): Promise<ALevelSection[]> {

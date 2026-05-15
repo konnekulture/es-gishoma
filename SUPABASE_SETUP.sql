@@ -150,7 +150,19 @@ ALTER TABLE traffic_stats DISABLE ROW LEVEL SECURITY;
 -- Go to Supabase Dashboard -> Storage
 -- 1. Create a NEW BUCKET named "uploads"
 -- 2. Make it PUBLIC
--- 3. In "Policies", create a policy for "uploads" bucket:
---    - Name: "Public Access"
---    - Allowed operations: SELECT, INSERT, UPDATE, DELETE
---    - Target: All users (Anon/Authenticated)
+
+-- 4. STORAGE POLICIES (Run this in SQL Editor)
+-- This allows anyone to upload/download/delete files in the "uploads" bucket.
+-- In a production app, you should restrict this to authenticated users.
+
+-- Allow public access to read files
+CREATE POLICY "Public Read" ON storage.objects FOR SELECT USING ( bucket_id = 'uploads' );
+
+-- Allow public access to upload files
+CREATE POLICY "Public Insert" ON storage.objects FOR INSERT WITH CHECK ( bucket_id = 'uploads' );
+
+-- Allow public access to update files
+CREATE POLICY "Public Update" ON storage.objects FOR UPDATE USING ( bucket_id = 'uploads' );
+
+-- Allow public access to delete files
+CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING ( bucket_id = 'uploads' );
