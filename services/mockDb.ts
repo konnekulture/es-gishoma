@@ -151,7 +151,13 @@ export class MockDB {
       ann.image = await uploadToSupabase(ann.id, ann.image, 'announcements');
     }
     const { error } = await supabase.from('announcements').upsert({ ...ann, deletedAt: null });
-    if (error) throw error;
+    if (error) {
+      console.error('Database Error:', error);
+      if (error.message.includes('row-level security')) {
+        throw new Error('Database Access Denied (RLS). Please run the setup SQL and disable RLS or add policies for the "announcements" table.');
+      }
+      throw error;
+    }
   }
 
   static async deleteAnnouncement(id: string) {
@@ -160,7 +166,12 @@ export class MockDB {
       .from('announcements')
       .update({ deletedAt: new Date().toISOString() })
       .eq('id', id);
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes('row-level security')) {
+        throw new Error('Action Denied by Security Policy (RLS).');
+      }
+      throw error;
+    }
   }
 
   static async getStaff(includeDeleted = false): Promise<Staff[]> {
@@ -168,7 +179,10 @@ export class MockDB {
     if (!includeDeleted) {
       query = query.is('deletedAt', null);
     }
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error && error.message.includes('row-level security')) {
+       console.warn('RLS blocking read on staff table');
+    }
     return data || [];
   }
 
@@ -178,7 +192,12 @@ export class MockDB {
       member.image = await uploadToSupabase(member.id, member.image, 'staff');
     }
     const { error } = await supabase.from('staff').upsert({ ...member, deletedAt: null });
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes('row-level security')) {
+        throw new Error('Security Error: Update blocked for "staff" table. Check RLS policies.');
+      }
+      throw error;
+    }
   }
 
   static async deleteStaff(id: string) {
@@ -187,7 +206,10 @@ export class MockDB {
       .from('staff')
       .update({ deletedAt: new Date().toISOString() })
       .eq('id', id);
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes('row-level security')) throw new Error('Delete policy violation.');
+      throw error;
+    }
   }
 
   static async getGallery(includeDeleted = false): Promise<GalleryItem[]> {
@@ -195,7 +217,10 @@ export class MockDB {
     if (!includeDeleted) {
       query = query.is('deletedAt', null);
     }
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error && error.message.includes('row-level security')) {
+       console.warn('RLS blocking read on gallery table');
+    }
     return data || [];
   }
 
@@ -205,7 +230,12 @@ export class MockDB {
       item.url = await uploadToSupabase(item.id, item.url, 'gallery');
     }
     const { error } = await supabase.from('gallery').upsert({ ...item, deletedAt: null });
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes('row-level security')) {
+        throw new Error('Database Security Denied: Please run instructions in SUPABASE_SETUP.sql for the "gallery" table.');
+      }
+      throw error;
+    }
   }
 
   static async deleteGalleryItem(id: string) {
@@ -214,7 +244,10 @@ export class MockDB {
       .from('gallery')
       .update({ deletedAt: new Date().toISOString() })
       .eq('id', id);
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes('row-level security')) throw new Error('Policy violation on delete.');
+      throw error;
+    }
   }
 
   static async getBooks(includeDeleted = false): Promise<Book[]> {
@@ -222,7 +255,10 @@ export class MockDB {
     if (!includeDeleted) {
       query = query.is('deletedAt', null);
     }
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error && error.message.includes('row-level security')) {
+       console.warn('RLS blocking read on curriculum_books table');
+    }
     return data || [];
   }
 
@@ -232,7 +268,12 @@ export class MockDB {
       book.fileUrl = await uploadToSupabase(book.id, book.fileUrl, 'books');
     }
     const { error } = await supabase.from('curriculum_books').upsert({ ...book, deletedAt: null });
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes('row-level security')) {
+        throw new Error('Security Error: Cannot save to "curriculum_books" table.');
+      }
+      throw error;
+    }
   }
 
   static async deleteBook(id: string) {
@@ -249,7 +290,10 @@ export class MockDB {
     if (!includeDeleted) {
       query = query.is('deletedAt', null);
     }
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error && error.message.includes('row-level security')) {
+       console.warn('RLS blocking read on past_papers table');
+    }
     return data || [];
   }
 
@@ -259,7 +303,12 @@ export class MockDB {
       paper.fileUrl = await uploadToSupabase(paper.id, paper.fileUrl, 'past_papers');
     }
     const { error } = await supabase.from('past_papers').upsert({ ...paper, deletedAt: null });
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes('row-level security')) {
+        throw new Error('Security Error: Cannot save to "past_papers" table.');
+      }
+      throw error;
+    }
   }
 
   static async deletePastPaper(id: string) {
