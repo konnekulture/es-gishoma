@@ -46,8 +46,16 @@ async function uploadToSupabase(id: string, data: string, path: string): Promise
       });
 
     if (uploadError) {
-      console.error('Storage upload error:', uploadError);
-      throw new Error(`Upload failed: ${uploadError.message}. Make sure you have created a PUBLIC bucket named "uploads" in your Supabase storage.`);
+      console.error('Storage upload error details:', uploadError);
+      
+      let friendlyMessage = `Upload failed: ${uploadError.message}.`;
+      if (uploadError.message.includes('row-level security')) {
+        friendlyMessage = "Security Access Denied (RLS). Please check your Supabase Storage Policies. See the SQL Editor instructions provided.";
+      } else if (uploadError.message.includes('not found')) {
+        friendlyMessage = 'The "uploads" bucket was not found. Please create it in your Supabase Storage dashboard.';
+      }
+      
+      throw new Error(friendlyMessage);
     }
 
     const { data: { publicUrl } } = supabase.storage
