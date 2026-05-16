@@ -145,6 +145,10 @@ const Navbar: React.FC = () => {
                 <span>{link.name}</span>
               </Link>
             ))}
+            
+            <Link to="/login" className="px-4 py-2 lg:px-5 lg:py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-full hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100">
+              Admin
+            </Link>
           </div>
 
           <div className="md:hidden flex items-center">
@@ -215,6 +219,15 @@ const Navbar: React.FC = () => {
               <span className="font-medium">{link.name}</span>
             </Link>
           ))}
+          
+          <Link 
+            to="/login"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center space-x-3 p-3 rounded-lg bg-indigo-600 text-white font-bold mt-4 shadow-lg shadow-indigo-200"
+          >
+            <Settings className="w-5 h-5" />
+            <span>Admin</span>
+          </Link>
         </div>
       </div>
     </nav>
