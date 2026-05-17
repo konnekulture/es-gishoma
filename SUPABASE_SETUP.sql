@@ -101,11 +101,22 @@ CREATE TABLE IF NOT EXISTS alumni_join_requests (
 -- Ensure correct columns exist in case table was created earlier without them
 DO $$ 
 BEGIN 
+  -- alumni_stories fixes
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='alumni_stories' AND column_name='classYear') THEN
+    ALTER TABLE alumni_stories ADD COLUMN classYear TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='alumni_stories' AND column_name='quote') THEN
+    ALTER TABLE alumni_stories ADD COLUMN quote TEXT;
+  END IF;
+
+  -- alumni_join_requests fixes
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='alumni_join_requests' AND column_name='classYear') THEN
     ALTER TABLE alumni_join_requests ADD COLUMN classYear TEXT;
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='alumni_stories' AND column_name='classYear') THEN
-    ALTER TABLE alumni_stories ADD COLUMN classYear TEXT;
+  
+  -- home_config fixes
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='home_config' AND column_name='schoolBriefImage') THEN
+    ALTER TABLE home_config ADD COLUMN schoolBriefImage TEXT;
   END IF;
 END $$;
 
