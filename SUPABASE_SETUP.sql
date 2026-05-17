@@ -117,7 +117,11 @@ CREATE TABLE IF NOT EXISTS home_config (
   heroTitle TEXT,
   heroSubtitle TEXT,
   heroImage TEXT,
-  schoolBrief TEXT
+  schoolBrief TEXT,
+  schoolBriefImage TEXT,
+  aboutHeroImage TEXT,
+  aboutLegacyImage1 TEXT,
+  aboutLegacyImage2 TEXT
 );
 
 -- Traffic Stats

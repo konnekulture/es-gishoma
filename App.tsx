@@ -38,7 +38,9 @@ import ManageMessages from './pages/admin/ManageMessages';
 import ManageBooks from './pages/admin/ManageBooks';
 import ManagePastPapers from './pages/admin/ManagePastPapers';
 import ManageAlumni from './pages/admin/ManageAlumni';
+import ManageSite from './pages/admin/ManageSite';
 import { MockDB } from './services/mockDb';
+import { supabase, SUPABASE_CONFIGURED } from './services/supabase';
 
 // --- Shared Components ---
 
@@ -312,6 +314,25 @@ const AdminSidebar: React.FC<{ isOpen: boolean; toggle: () => void }> = ({ isOpe
   const navigate = useNavigate();
   const location = useLocation();
 
+  if (!SUPABASE_CONFIGURED) {
+    return (
+      <div className={`w-64 bg-slate-900 min-h-screen text-white flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-8 border-b border-slate-800 shrink-0">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center font-bold text-white">EG</div>
+            <span className="font-bold tracking-tight text-white brand-font">ADMIN</span>
+          </Link>
+        </div>
+        <div className="flex-1 p-6 flex flex-col justify-center items-center text-center space-y-4">
+          <Settings className="w-12 h-12 text-amber-500 animate-pulse" />
+          <h3 className="text-xl font-bold">Config Required</h3>
+          <p className="text-slate-400 text-sm">Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Settings to enable the portal.</p>
+          <Link to="/" className="text-indigo-400 hover:underline text-sm mt-4 inline-block">Return Home</Link>
+        </div>
+      </div>
+    );
+  }
+
   const menuItems = [
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Inbox', path: '/admin/messages', icon: Inbox },
@@ -321,6 +342,7 @@ const AdminSidebar: React.FC<{ isOpen: boolean; toggle: () => void }> = ({ isOpe
     { name: 'Past Papers', path: '/admin/past-papers', icon: FileText },
     { name: 'Alumni Stories', path: '/admin/alumni', icon: GraduationCap },
     { name: 'Gallery Management', path: '/admin/gallery', icon: GalleryIcon },
+    { name: 'Site Settings', path: '/admin/site-settings', icon: Settings },
   ];
 
   const handleLogout = () => {
@@ -435,6 +457,7 @@ export default function App() {
                         <Route path="past-papers" element={<ManagePastPapers />} />
                         <Route path="alumni" element={<ManageAlumni />} />
                         <Route path="gallery" element={<ManageGallery />} />
+                        <Route path="site-settings" element={<ManageSite />} />
                         <Route path="*" element={<Navigate to="dashboard" />} />
                       </Routes>
                     </div>

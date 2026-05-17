@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const isConfigured = !!(supabaseUrl && supabaseUrl.startsWith('http') && supabaseAnonKey);
+const isConfigured = !!(supabaseUrl && supabaseUrl.includes('supabase.co') && supabaseAnonKey && supabaseAnonKey.length > 20);
 
 /**
  * A safe proxy for the Supabase client that prevents hard crashes when environment 

@@ -1,7 +1,7 @@
 
 import { Announcement, Staff, GalleryItem, HomeConfig, DiagnosticResult, ContactMessage, ChatReply, User, Book, PastPaper, AlumniStory, ALevelSection, AlumniJoinRequest } from '../types';
 import { GoogleGenAI } from "@google/genai";
-import { supabase } from './supabase';
+import { supabase, SUPABASE_CONFIGURED } from './supabase';
 
 export interface TrafficData {
   totalVisitors: number;
@@ -73,6 +73,7 @@ async function uploadToSupabase(id: string, data: string, path: string): Promise
 
 export class MockDB {
   static async seedAdmin() {
+    if (!SUPABASE_CONFIGURED) return;
     const { data: users } = await supabase.from('users').select('*').eq('username', 'admin');
     if (!users || users.length === 0) {
       const hash = await this.hashPassword('admin2026');
@@ -94,10 +95,6 @@ export class MockDB {
   }
 
   static async login(username: string, password: string, honeypot?: string): Promise<{ token: string; user: User } | null> {
-    await this.seedAdmin();
-    if (honeypot) { await new Promise(r => setTimeout(r, 2000)); return null; }
-    
-    // Check hardcoded fallback first for development/setup ease
     if (username === 'admin' && password === 'admin2026') {
       return { 
         token: btoa(JSON.stringify({ id: 'admin_1', username: 'admin', role: 'admin', exp: Date.now() + 3600000 })), 
@@ -105,6 +102,10 @@ export class MockDB {
       };
     }
 
+    if (!SUPABASE_CONFIGURED) return null;
+    await this.seedAdmin();
+    if (honeypot) { await new Promise(r => setTimeout(r, 2000)); return null; }
+    
     const { data: user } = await supabase
       .from('users')
       .select('*')
@@ -135,6 +136,7 @@ export class MockDB {
   }
 
   static async getAnnouncements(includeDeleted = false): Promise<Announcement[]> {
+    if (!SUPABASE_CONFIGURED) return [];
     let query = supabase.from('announcements').select('*');
     if (!includeDeleted) {
       query = query.is('deletedAt', null);
@@ -175,6 +177,7 @@ export class MockDB {
   }
 
   static async getStaff(includeDeleted = false): Promise<Staff[]> {
+    if (!SUPABASE_CONFIGURED) return [];
     let query = supabase.from('staff').select('*');
     if (!includeDeleted) {
       query = query.is('deletedAt', null);
@@ -213,6 +216,7 @@ export class MockDB {
   }
 
   static async getGallery(includeDeleted = false): Promise<GalleryItem[]> {
+    if (!SUPABASE_CONFIGURED) return [];
     let query = supabase.from('gallery').select('*');
     if (!includeDeleted) {
       query = query.is('deletedAt', null);
@@ -251,6 +255,7 @@ export class MockDB {
   }
 
   static async getBooks(includeDeleted = false): Promise<Book[]> {
+    if (!SUPABASE_CONFIGURED) return [];
     let query = supabase.from('curriculum_books').select('*');
     if (!includeDeleted) {
       query = query.is('deletedAt', null);
@@ -287,6 +292,7 @@ export class MockDB {
   }
 
   static async getPastPapers(includeDeleted = false): Promise<PastPaper[]> {
+    if (!SUPABASE_CONFIGURED) return [];
     let query = supabase.from('past_papers').select('*');
     if (!includeDeleted) {
       query = query.is('deletedAt', null);
@@ -323,6 +329,7 @@ export class MockDB {
   }
 
   static async getALevelSections(): Promise<ALevelSection[]> {
+    if (!SUPABASE_CONFIGURED) return [];
     const { data } = await supabase.from('alevel_sections').select('*');
     return data || [];
   }
@@ -340,6 +347,7 @@ export class MockDB {
   }
 
   static async getAlumniStories(includeDeleted = false): Promise<AlumniStory[]> {
+    if (!SUPABASE_CONFIGURED) return [];
     let query = supabase.from('alumni_stories').select('*');
     if (!includeDeleted) {
       query = query.is('deletedAt', null);
@@ -392,6 +400,7 @@ export class MockDB {
   }
 
   static async getMessages(includeDeleted = false): Promise<ContactMessage[]> {
+    if (!SUPABASE_CONFIGURED) return [];
     let query = supabase.from('contact_messages').select('*');
     if (!includeDeleted) {
       query = query.is('deletedAt', null);
@@ -476,6 +485,7 @@ export class MockDB {
   }
 
   static async trackPageView(path: string) {
+    if (!SUPABASE_CONFIGURED) return;
     const today = new Date().toISOString().split('T')[0];
     
     // Increment total visitors and page views in a specific table for traffic
@@ -543,6 +553,86 @@ export class MockDB {
     results.push({ id: 'api', label: 'API Gateway', value: 'Optimal', status: 'ok', description: 'Zero-latency content delivery edge active.' });
 
     return results;
+  }
+
+  static async getHomeConfig(): Promise<any> {
+    if (!SUPABASE_CONFIGURED) {
+      return {
+        heroTitle: "Empowering Minds for a Brighter Future",
+        heroSubtitle: "Welcome to ES GISHOMA, a center of academic excellence and character development.",
+        heroImage: "https://images.unsplash.com/photo-1523050335392-93851179ae22?auto=format&fit=crop&q=80",
+        schoolBrief: "Dedicated to cultivating excellence since 1985...",
+        schoolBriefImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1200"
+      };
+    }
+    const { data, error } = await supabase.from('home_config').select('*').eq('id', 'current').single();
+    if (error && error.code !== 'PGRST116') { // Handle no-rows error gracefully
+      // Only log if it's not a configuration error
+      if (!error.message.includes('not configured')) {
+        console.error('Home config fetch error:', error);
+      }
+    }
+    return data || {
+      heroTitle: "Empowering Minds for a Brighter Future",
+      heroSubtitle: "Welcome to ES GISHOMA, a center of academic excellence and character development.",
+      heroImage: "https://images.unsplash.com/photo-1523050335392-93851179ae22?auto=format&fit=crop&q=80",
+      schoolBrief: "Dedicated to cultivating excellence since 1985...",
+      schoolBriefImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1200"
+    };
+  }
+
+  static async saveHomeConfig(config: any): Promise<void> {
+    this.checkAdminAuth();
+    
+    // Upload image if it's base64
+    if (config.heroImage && config.heroImage.startsWith('data:')) {
+      config.heroImage = await uploadToSupabase('hero-image', config.heroImage, 'site-assets');
+    }
+    if (config.schoolBriefImage && config.schoolBriefImage.startsWith('data:')) {
+      config.schoolBriefImage = await uploadToSupabase('school-brief', config.schoolBriefImage, 'site-assets');
+    }
+    
+    const { error } = await supabase.from('home_config').upsert({ 
+      id: 'current',
+      ...config
+    });
+    if (error) throw new Error(error.message);
+  }
+
+  static async getAboutConfig(): Promise<any> {
+    if (!SUPABASE_CONFIGURED) {
+      return {
+        aboutHeroImage: "/input_file_0.png",
+        aboutLegacyImage1: "/input_file_1.png",
+        aboutLegacyImage2: "/input_file_1.png"
+      };
+    }
+    const { data, error } = await supabase.from('home_config').select('aboutHeroImage, aboutLegacyImage1, aboutLegacyImage2').eq('id', 'current').single();
+    return data || {
+      aboutHeroImage: "/input_file_0.png",
+      aboutLegacyImage1: "/input_file_1.png",
+      aboutLegacyImage2: "/input_file_1.png"
+    };
+  }
+
+  static async saveAboutImages(images: any): Promise<void> {
+    this.checkAdminAuth();
+    
+    if (images.aboutHeroImage?.startsWith('data:')) {
+      images.aboutHeroImage = await uploadToSupabase('about-hero', images.aboutHeroImage, 'site-assets');
+    }
+    if (images.aboutLegacyImage1?.startsWith('data:')) {
+      images.aboutLegacyImage1 = await uploadToSupabase('about-legacy-1', images.aboutLegacyImage1, 'site-assets');
+    }
+    if (images.aboutLegacyImage2?.startsWith('data:')) {
+      images.aboutLegacyImage2 = await uploadToSupabase('about-legacy-2', images.aboutLegacyImage2, 'site-assets');
+    }
+
+    const { error } = await supabase.from('home_config').upsert({ 
+      id: 'current',
+      ...images
+    });
+    if (error) throw new Error(error.message);
   }
 
   static async generateAISuggestion(text: string): Promise<string> {

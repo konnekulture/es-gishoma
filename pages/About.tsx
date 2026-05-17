@@ -1,15 +1,33 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Target, Eye, Award, History, CheckCircle2 } from 'lucide-react';
+import { MockDB } from '../services/mockDb';
 
 export default function About() {
+  const [images, setImages] = useState<any>({
+    aboutHeroImage: "/input_file_0.png",
+    aboutLegacyImage1: "/input_file_1.png",
+    aboutLegacyImage2: "/input_file_1.png"
+  });
+
+  useEffect(() => {
+    const loadImages = async () => {
+      const config = await MockDB.getAboutConfig();
+      setImages(config);
+    };
+    loadImages();
+  }, []);
+
   return (
     <div className="animate-in fade-in duration-500 pb-20">
       <div className="bg-slate-900 py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=1920')] opacity-20 mix-blend-overlay"></div>
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-normal"
+          style={{ backgroundImage: `url(${images.aboutHeroImage})` }}
+        ></div>
         <div className="max-w-7xl mx-auto px-4 relative z-10 text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">Our Legacy & Purpose</h1>
-          <p className="text-slate-300 text-xl max-w-3xl mx-auto font-light">Dedicated to cultivating excellence since 1985, building a foundation for lifelong learning and global leadership.</p>
+          <p className="text-slate-100 text-xl max-w-3xl mx-auto font-medium drop-shadow-md">Dedicated to cultivating excellence since 1985, building a foundation for lifelong learning and global leadership.</p>
         </div>
       </div>
 
@@ -33,8 +51,8 @@ export default function About() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=800" className="rounded-2xl shadow-lg mt-8" alt="Old Campus" />
-              <img src="https://images.unsplash.com/photo-1523050335392-93851179ae22?auto=format&fit=crop&q=80&w=800" className="rounded-2xl shadow-lg" alt="Science Lab" />
+              <img src={images.aboutLegacyImage1} className="rounded-2xl shadow-lg mt-8 object-cover h-64 w-full" alt="ES Gishoma Campus" />
+              <img src={images.aboutLegacyImage2} className="rounded-2xl shadow-lg object-cover h-64 w-full" alt="ES Gishoma Excellence" />
             </div>
           </div>
         </div>

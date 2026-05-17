@@ -64,7 +64,7 @@ export default function Home() {
             <div className="relative group order-2 lg:order-1">
               <div className="absolute -top-6 -left-6 w-32 h-32 bg-indigo-100 rounded-full blur-3xl -z-10 animate-pulse"></div>
               <img 
-                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1200" 
+                src={config?.schoolBriefImage || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1200"} 
                 alt="Students" 
                 className="rounded-3xl shadow-2xl relative w-full h-auto object-cover aspect-video sm:aspect-square md:aspect-video lg:aspect-square"
               />
