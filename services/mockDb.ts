@@ -424,11 +424,41 @@ export class MockDB {
 
   static async updateAlumniJoinRequestStatus(id: string, status: 'approved' | 'rejected') {
     this.checkAdminAuth();
-    const { error } = await supabase
+    
+    // 1. Update the status in join requests
+    const { data: request, error: fetchError } = await supabase
+      .from('alumni_join_requests')
+      .select('*')
+      .eq('id', id)
+      .single();
+      
+    if (fetchError) throw new Error(`Could not find request: ${fetchError.message}`);
+
+    const { error: updateError } = await supabase
       .from('alumni_join_requests')
       .update({ status })
       .eq('id', id);
-    if (error) throw new Error(`Status update failed: ${error.message}`);
+      
+    if (updateError) throw new Error(`Status update failed: ${updateError.message}`);
+
+    // 2. If approved, create/update a formal alumni story for the spotlight section
+    if (status === 'approved') {
+      // Use a predictable ID derived from the request ID to prevent duplicates if re-approved
+      const storyId = `story-${id}`;
+      const newStory: AlumniStory = {
+        id: storyId,
+        name: request.name,
+        classYear: request.classYear,
+        role: request.currentRole || 'Alumnus',
+        quote: "Excited to be part of the ES GISHOMA Alumni Network!", // Default quote
+        image: `https://ui-avatars.com/api/?name=${encodeURIComponent(request.name)}&background=random&size=400` // Placeholder image
+      };
+      
+      const { error: storyError } = await supabase.from('alumni_stories').upsert({ ...newStory, deletedAt: null });
+      if (storyError) {
+        console.error('Failed to create/update alumni story from approved request:', storyError);
+      }
+    }
   }
 
   static async getMessages(includeDeleted = false): Promise<ContactMessage[]> {
