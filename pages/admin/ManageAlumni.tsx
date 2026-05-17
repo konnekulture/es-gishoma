@@ -37,8 +37,9 @@ export default function ManageAlumni() {
         const data = await MockDB.getAlumniJoinRequests();
         setJoinRequests(data);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      alert(`Error loading alumni data: ${e.message || 'Unknown error'}. Please ensure your Supabase tables are set up correctly.`);
     } finally {
       setIsLoading(false);
     }

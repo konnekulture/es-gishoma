@@ -348,12 +348,21 @@ export class MockDB {
 
   static async getAlumniStories(includeDeleted = false): Promise<AlumniStory[]> {
     if (!SUPABASE_CONFIGURED) return [];
-    let query = supabase.from('alumni_stories').select('*');
-    if (!includeDeleted) {
-      query = query.is('deletedAt', null);
+    try {
+      let query = supabase.from('alumni_stories').select('*');
+      if (!includeDeleted) {
+        query = query.is('deletedAt', null);
+      }
+      const { data, error } = await query;
+      if (error) {
+        console.error('Alumni stories fetch error:', error);
+        throw new Error(`Failed to fetch alumni stories: ${error.message}`);
+      }
+      return data || [];
+    } catch (e: any) {
+      console.error('Unexpected alumni stories error:', e);
+      return [];
     }
-    const { data } = await query;
-    return data || [];
   }
 
   static async saveAlumniStory(story: AlumniStory) {
@@ -362,7 +371,10 @@ export class MockDB {
       story.image = await uploadToSupabase(story.id, story.image, 'alumni');
     }
     const { error } = await supabase.from('alumni_stories').upsert({ ...story, deletedAt: null });
-    if (error) throw error;
+    if (error) {
+      console.error('Save alumni story error:', error);
+      throw new Error(`Failed to save alumni story: ${error.message}`);
+    }
   }
 
   static async deleteAlumniStory(id: string) {
@@ -371,22 +383,34 @@ export class MockDB {
       .from('alumni_stories')
       .update({ deletedAt: new Date().toISOString() })
       .eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error(`Delete failed: ${error.message}`);
   }
 
   static async submitAlumniJoinRequest(request: Omit<AlumniJoinRequest, 'id' | 'status' | 'submittedAt'>) {
+    if (!SUPABASE_CONFIGURED) {
+      console.warn('Supabase not configured, mimicking success for join request');
+      return;
+    }
     const { error } = await supabase.from('alumni_join_requests').insert([{
       ...request,
       id: `ajr${Date.now()}`,
       status: 'pending',
       submittedAt: new Date().toISOString()
     }]);
-    if (error) throw error;
+    if (error) {
+      console.error('Alumni join request error:', error);
+      throw new Error(`Submission failed: ${error.message}`);
+    }
   }
 
   static async getAlumniJoinRequests(): Promise<AlumniJoinRequest[]> {
     this.checkAdminAuth();
-    const { data } = await supabase.from('alumni_join_requests').select('*');
+    if (!SUPABASE_CONFIGURED) return [];
+    const { data, error } = await supabase.from('alumni_join_requests').select('*').order('submittedAt', { ascending: false });
+    if (error) {
+      console.error('Fetch alumni requests error:', error);
+      return [];
+    }
     return data || [];
   }
 
@@ -396,7 +420,7 @@ export class MockDB {
       .from('alumni_join_requests')
       .update({ status })
       .eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error(`Status update failed: ${error.message}`);
   }
 
   static async getMessages(includeDeleted = false): Promise<ContactMessage[]> {
