@@ -124,6 +124,10 @@ CREATE TABLE IF NOT EXISTS home_config (
   aboutLegacyImage2 TEXT
 );
 
+-- NOTE: If you add columns and see "schema cache" errors, run: 
+-- NOTIFY pgrst, 'reload schema';
+-- in the SQL editor.
+
 -- Traffic Stats
 CREATE TABLE IF NOT EXISTS traffic_stats (
   id TEXT PRIMARY KEY CHECK (id = 'global'),
