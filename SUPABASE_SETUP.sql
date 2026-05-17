@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS alevel_sections (
   name TEXT NOT NULL UNIQUE
 );
 
--- Alumni Stories
+-- Alumni Stories Table (Public spotlights)
 CREATE TABLE IF NOT EXISTS alumni_stories (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS alumni_stories (
   deletedAt TEXT
 );
 
--- Alumni Join Requests
+-- Alumni Join Requests Table (Applications from alumni)
 CREATE TABLE IF NOT EXISTS alumni_join_requests (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -97,6 +97,17 @@ CREATE TABLE IF NOT EXISTS alumni_join_requests (
   status TEXT DEFAULT 'pending',
   submittedAt TEXT NOT NULL
 );
+
+-- Ensure correct columns exist in case table was created earlier without them
+DO $$ 
+BEGIN 
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='alumni_join_requests' AND column_name='classYear') THEN
+    ALTER TABLE alumni_join_requests ADD COLUMN classYear TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='alumni_stories' AND column_name='classYear') THEN
+    ALTER TABLE alumni_stories ADD COLUMN classYear TEXT;
+  END IF;
+END $$;
 
 -- Contact Messages
 CREATE TABLE IF NOT EXISTS contact_messages (
@@ -124,9 +135,8 @@ CREATE TABLE IF NOT EXISTS home_config (
   aboutLegacyImage2 TEXT
 );
 
--- NOTE: If you add columns and see "schema cache" errors, run: 
+-- NOTE: If you add columns and see "schema cache" errors, run the command below: 
 -- NOTIFY pgrst, 'reload schema';
--- in the SQL editor.
 
 -- Traffic Stats
 CREATE TABLE IF NOT EXISTS traffic_stats (
@@ -138,21 +148,22 @@ CREATE TABLE IF NOT EXISTS traffic_stats (
 );
 
 -- 2. DISABLE RLS (Quick Start)
--- This allows the application to read/write using the Anon Key.
--- For a production app, you should later configure specific RLS policies.
+-- Copy and run these to ensure tables are accessible
+ALTER TABLE IF EXISTS users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS announcements DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS staff DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS gallery DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS curriculum_books DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS past_papers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS alevel_sections DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS alumni_stories DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS alumni_join_requests DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS contact_messages DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS home_config DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS traffic_stats DISABLE ROW LEVEL SECURITY;
 
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE announcements DISABLE ROW LEVEL SECURITY;
-ALTER TABLE staff DISABLE ROW LEVEL SECURITY;
-ALTER TABLE gallery DISABLE ROW LEVEL SECURITY;
-ALTER TABLE curriculum_books DISABLE ROW LEVEL SECURITY;
-ALTER TABLE past_papers DISABLE ROW LEVEL SECURITY;
-ALTER TABLE alevel_sections DISABLE ROW LEVEL SECURITY;
-ALTER TABLE alumni_stories DISABLE ROW LEVEL SECURITY;
-ALTER TABLE alumni_join_requests DISABLE ROW LEVEL SECURITY;
-ALTER TABLE contact_messages DISABLE ROW LEVEL SECURITY;
-ALTER TABLE home_config DISABLE ROW LEVEL SECURITY;
-ALTER TABLE traffic_stats DISABLE ROW LEVEL SECURITY;
+-- IMPORTANT: RUN THIS FINALLY TO FIX SCHEMA CACHE ISSUES
+NOTIFY pgrst, 'reload schema';
 
 -- 3. STORAGE SETUP
 -- Go to Supabase Dashboard -> Storage

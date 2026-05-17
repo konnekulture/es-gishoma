@@ -424,8 +424,9 @@ export class MockDB {
 
   static async updateAlumniJoinRequestStatus(id: string, status: 'approved' | 'rejected') {
     this.checkAdminAuth();
+    if (!SUPABASE_CONFIGURED) return;
     
-    // 1. Update the status in join requests
+    // 1. Fetch the request details
     const { data: request, error: fetchError } = await supabase
       .from('alumni_join_requests')
       .select('*')
@@ -434,6 +435,7 @@ export class MockDB {
       
     if (fetchError) throw new Error(`Could not find request: ${fetchError.message}`);
 
+    // 2. Update the status in join requests table
     const { error: updateError } = await supabase
       .from('alumni_join_requests')
       .update({ status })
@@ -441,22 +443,33 @@ export class MockDB {
       
     if (updateError) throw new Error(`Status update failed: ${updateError.message}`);
 
-    // 2. If approved, create/update a formal alumni story for the spotlight section
-    if (status === 'approved') {
+    // 3. If approved, create/update a formal alumni story for the spotlight section
+    if (status === 'approved' && request) {
       // Use a predictable ID derived from the request ID to prevent duplicates if re-approved
       const storyId = `story-${id}`;
-      const newStory: AlumniStory = {
+      
+      // Map alumni_join_requests fields to alumni_stories fields
+      // Ensure we don't send nulls for required fields
+      const storyPayload = {
         id: storyId,
-        name: request.name,
-        classYear: request.classYear,
+        name: request.name || 'Anonymous Alumnus',
+        classYear: request.classYear || 'Unknown Year',
         role: request.currentRole || 'Alumnus',
-        quote: "Excited to be part of the ES GISHOMA Alumni Network!", // Default quote
-        image: `https://ui-avatars.com/api/?name=${encodeURIComponent(request.name)}&background=random&size=400` // Placeholder image
+        quote: "I am proud to be an alumnus of ES GISHOMA. It shaped who I am today.",
+        image: `https://ui-avatars.com/api/?name=${encodeURIComponent(request.name || 'Alumnus')}&background=random&size=400`,
+        deletedAt: null
       };
       
-      const { error: storyError } = await supabase.from('alumni_stories').upsert({ ...newStory, deletedAt: null });
+      console.log('Creating alumni story from request:', storyPayload);
+      
+      const { error: storyError } = await supabase
+        .from('alumni_stories')
+        .upsert(storyPayload);
+        
       if (storyError) {
         console.error('Failed to create/update alumni story from approved request:', storyError);
+        // Optionally throw here if we want the operation to fail if the story can't be created
+        throw new Error(`Request approved, but failed to create story: ${storyError.message}`);
       }
     }
   }
