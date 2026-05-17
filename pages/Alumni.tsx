@@ -42,9 +42,9 @@ export default function Alumni() {
         setIsSubmitted(false);
         setFormData({ name: '', email: '', classYear: '', currentRole: '', instagram: '' });
       }, 3000);
-    } catch (error) {
-      console.error(error);
-      alert("Failed to submit request. Please try again.");
+    } catch (error: any) {
+      console.error('Submission error:', error);
+      alert(`Failed to submit request: ${error.message || 'Please try again.'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -270,11 +270,11 @@ export default function Alumni() {
                         <Instagram className="w-3 h-3 mr-2 text-indigo-500" /> Instagram Profile (Optional)
                       </label>
                       <input 
-                        type="url" 
+                        type="text" 
                         value={formData.instagram}
                         onChange={(e) => setFormData({...formData, instagram: e.target.value})}
                         className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium transition-all"
-                        placeholder="https://instagram.com/username"
+                        placeholder="e.g. @username or https://instagram.com/username"
                       />
                     </div>
 

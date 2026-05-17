@@ -391,15 +391,23 @@ export class MockDB {
       console.warn('Supabase not configured, mimicking success for join request');
       return;
     }
-    const { error } = await supabase.from('alumni_join_requests').insert([{
-      ...request,
-      id: `ajr${Date.now()}`,
-      status: 'pending',
-      submittedAt: new Date().toISOString()
-    }]);
-    if (error) {
-      console.error('Alumni join request error:', error);
-      throw new Error(`Submission failed: ${error.message}`);
+    try {
+      const payload = {
+        ...request,
+        id: `ajr${Date.now()}`,
+        status: 'pending',
+        submittedAt: new Date().toISOString()
+      };
+      
+      const { error } = await supabase.from('alumni_join_requests').insert([payload]);
+      
+      if (error) {
+        console.error('Alumni join request Supabase error:', error);
+        throw new Error(error.message);
+      }
+    } catch (e: any) {
+      console.error('Alumni join request catch error:', e);
+      throw e;
     }
   }
 
