@@ -314,25 +314,6 @@ const AdminSidebar: React.FC<{ isOpen: boolean; toggle: () => void }> = ({ isOpe
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (!SUPABASE_CONFIGURED) {
-    return (
-      <div className={`w-64 bg-slate-900 min-h-screen text-white flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-8 border-b border-slate-800 shrink-0">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center font-bold text-white">EG</div>
-            <span className="font-bold tracking-tight text-white brand-font">ADMIN</span>
-          </Link>
-        </div>
-        <div className="flex-1 p-6 flex flex-col justify-center items-center text-center space-y-4">
-          <Settings className="w-12 h-12 text-amber-500 animate-pulse" />
-          <h3 className="text-xl font-bold">Config Required</h3>
-          <p className="text-slate-400 text-sm">Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Settings to enable the portal.</p>
-          <Link to="/" className="text-indigo-400 hover:underline text-sm mt-4 inline-block">Return Home</Link>
-        </div>
-      </div>
-    );
-  }
-
   const menuItems = [
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Inbox', path: '/admin/messages', icon: Inbox },
@@ -387,6 +368,19 @@ const AdminSidebar: React.FC<{ isOpen: boolean; toggle: () => void }> = ({ isOpe
             </Link>
           ))}
         </nav>
+
+        {!SUPABASE_CONFIGURED && (
+          <div className="p-4 mx-4 mb-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+             <div className="flex items-center space-x-2 text-amber-500 mb-1">
+               <AlertCircle className="w-4 h-4 shrink-0" />
+               <span className="text-[10px] font-bold uppercase tracking-wider">Sync Disabled</span>
+             </div>
+             <p className="text-[9px] text-slate-400 leading-tight">
+               Persistent storage is inactive. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable.
+             </p>
+          </div>
+        )}
+
         <div className="p-4 border-t border-slate-800 shrink-0">
           <button 
             onClick={handleLogout}
@@ -448,6 +442,27 @@ export default function App() {
                       <span className="ml-4 font-bold text-slate-900">Admin Portal</span>
                     </header>
                     <div className="p-4 sm:p-6 lg:p-10 flex-1 overflow-x-hidden overflow-y-auto w-full max-w-full">
+                      {!SUPABASE_CONFIGURED && (
+                        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                              <Settings className="w-6 h-6 text-amber-600 animate-pulse" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-amber-900 leading-none mb-1">Configuration Required</h4>
+                              <p className="text-sm text-amber-700">Storage and database features are disabled until Supabase is connected in Settings.</p>
+                            </div>
+                          </div>
+                          <a 
+                            href="https://supabase.com" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="px-6 py-2 bg-amber-600 text-white rounded-xl text-sm font-bold hover:bg-amber-700 transition-colors shadow-sm"
+                          >
+                            Setup Supabase
+                          </a>
+                        </div>
+                      )}
                       <Routes>
                         <Route path="dashboard" element={<Dashboard />} />
                         <Route path="messages" element={<ManageMessages />} />
