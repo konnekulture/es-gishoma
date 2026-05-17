@@ -468,22 +468,6 @@ export class MockDB {
     };
   }
 
-  static async getHomeConfig(): Promise<HomeConfig> {
-    const { data } = await supabase.from('home_config').select('*').single();
-    return data || {
-      heroTitle: 'Excellence in Education',
-      heroSubtitle: 'Empowering students to achieve their full potential through holistic learning and character building.',
-      heroImage: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=1920',
-      schoolBrief: 'ES GISHOMA is a leading educational institution dedicated to providing a transformative learning experience.'
-    };
-  }
-
-  static async saveHomeConfig(config: HomeConfig) {
-    this.checkAdminAuth();
-    const { error } = await supabase.from('home_config').upsert({ id: 'current', ...config });
-    if (error) throw error;
-  }
-
   static async trackPageView(path: string) {
     if (!SUPABASE_CONFIGURED) return;
     const today = new Date().toISOString().split('T')[0];
