@@ -496,14 +496,33 @@ export class MockDB {
       if (error) {
         throw error;
       }
-      if (data && data.length > 0) {
-        // Sync to local storage for caching / offline resilience
-        try {
-          localStorage.setItem('local_contact_messages', JSON.stringify(data));
-        } catch (e) {}
-        return data;
-      }
-      return data || [];
+      
+      const dbMessages = data || [];
+      
+      // Merge dbMessages with localData to guarantee that local entries
+      // (like during local tests, offline submissions, or partial sync) are visible to the admin!
+      const mergedMap = new Map<string, ContactMessage>();
+      
+      // 1. Load local cache/fallback entries
+      localData.forEach(m => {
+        if (includeDeleted || !m.deletedAt) {
+          mergedMap.set(String(m.id), m);
+        }
+      });
+      
+      // 2. Load fresh database entries (overwriting local ones if id matches)
+      dbMessages.forEach(m => {
+        mergedMap.set(String(m.id), m);
+      });
+      
+      const mergedList = Array.from(mergedMap.values());
+      
+      // Sync merged results back to local storage cache
+      try {
+        localStorage.setItem('local_contact_messages', JSON.stringify(mergedList));
+      } catch (e) {}
+      
+      return mergedList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     } catch (dbError) {
       console.warn("Supabase fetch failed, falling back to local storage:", dbError);
       const filtered = includeDeleted ? localData : localData.filter(m => !m.deletedAt);
@@ -535,10 +554,37 @@ export class MockDB {
 
     // 2. Sync to Supabase if configured
     if (SUPABASE_CONFIGURED) {
-      const { error } = await supabase.from('contact_messages').insert([newMessage]);
-      if (error) {
-        console.error("Supabase message save error:", error);
-        throw error;
+      // Create a dbPayload without any camelCase or complex fields that might fail case folding
+      const dbPayload = {
+        id: newMessage.id,
+        name: newMessage.name,
+        email: newMessage.email,
+        subject: newMessage.subject,
+        message: newMessage.message,
+        date: newMessage.date,
+        status: newMessage.status,
+        replies: newMessage.replies
+      };
+
+      try {
+        const { error } = await supabase.from('contact_messages').insert([dbPayload]);
+        if (error) {
+          console.error("Supabase message save error:", error);
+          
+          let customMsg = error.message || String(error);
+          if (customMsg.includes('relation') && customMsg.includes('does not exist')) {
+            customMsg = "The database table 'contact_messages' does not exist in your Supabase project. To resolve this, please go to your Supabase Dashboard -> SQL Editor, copy ALL queries from the SUPABASE_SETUP.sql file, run them to set up the schema, and click 'reload schema'.";
+          } else if (customMsg.includes('row-level security') || customMsg.includes('policy')) {
+            customMsg = "Access denied by Supabase Row Level Security (RLS). Please disable RLS for 'contact_messages' by executing: 'ALTER TABLE contact_messages DISABLE ROW LEVEL SECURITY;' in your Supabase SQL Editor and running 'NOTIFY pgrst, ''reload schema'';'.";
+          } else if (customMsg.includes('column') || customMsg.includes('is not found') || customMsg.includes('schema cache')) {
+            customMsg = `Database schema mismatch: ${customMsg}. Please go to your Supabase SQL Editor, run the commands in the DO block of 'SUPABASE_SETUP.sql' to add any missing columns, and execute: 'NOTIFY pgrst, ''reload schema'';' to refresh the schema cache.`;
+          }
+          
+          throw new Error(customMsg);
+        }
+      } catch (dbErr: any) {
+        console.error("Exception in Supabase contact_messages insert:", dbErr);
+        throw new Error(dbErr.message || String(dbErr));
       }
     }
   }

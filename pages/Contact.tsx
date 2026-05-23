@@ -31,9 +31,9 @@ export default function Contact() {
       setEmail('');
       setSubject('General Inquiry');
       setMessage('');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to send message. Please try again later.');
+      alert(err.message || 'Failed to send message. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }

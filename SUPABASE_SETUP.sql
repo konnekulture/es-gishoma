@@ -118,6 +118,17 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='home_config' AND column_name='schoolBriefImage') THEN
     ALTER TABLE home_config ADD COLUMN schoolBriefImage TEXT;
   END IF;
+
+  -- contact_messages fixes
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contact_messages' AND column_name='status') THEN
+    ALTER TABLE contact_messages ADD COLUMN status TEXT DEFAULT 'new';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contact_messages' AND column_name='replies') THEN
+    ALTER TABLE contact_messages ADD COLUMN replies JSONB DEFAULT '[]'::jsonb;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contact_messages' AND column_name='deletedAt') THEN
+    ALTER TABLE contact_messages ADD COLUMN deletedAt TEXT;
+  END IF;
 END $$;
 
 -- Contact Messages
