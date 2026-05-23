@@ -475,53 +475,129 @@ export class MockDB {
   }
 
   static async getMessages(includeDeleted = false): Promise<ContactMessage[]> {
-    if (!SUPABASE_CONFIGURED) return [];
-    let query = supabase.from('contact_messages').select('*');
-    if (!includeDeleted) {
-      query = query.is('deletedAt', null);
+    let localData: ContactMessage[] = [];
+    try {
+      localData = JSON.parse(localStorage.getItem('local_contact_messages') || '[]');
+    } catch (e) {
+      console.warn("Could not read local messages cache", e);
     }
-    const { data } = await query.order('date', { ascending: false });
-    return data || [];
+
+    if (!SUPABASE_CONFIGURED) {
+      const filtered = includeDeleted ? localData : localData.filter(m => !m.deletedAt);
+      return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+
+    try {
+      let query = supabase.from('contact_messages').select('*');
+      if (!includeDeleted) {
+        query = query.is('deletedAt', null);
+      }
+      const { data, error } = await query.order('date', { ascending: false });
+      if (error) {
+        throw error;
+      }
+      if (data && data.length > 0) {
+        // Sync to local storage for caching / offline resilience
+        try {
+          localStorage.setItem('local_contact_messages', JSON.stringify(data));
+        } catch (e) {}
+        return data;
+      }
+      return data || [];
+    } catch (dbError) {
+      console.warn("Supabase fetch failed, falling back to local storage:", dbError);
+      const filtered = includeDeleted ? localData : localData.filter(m => !m.deletedAt);
+      return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
   }
 
   static async saveMessage(msg: Partial<ContactMessage>) {
-    const { error } = await supabase.from('contact_messages').insert([{
-      id: Date.now().toString(),
+    const newMessage: ContactMessage = {
+      id: msg.id || Date.now().toString(),
       name: msg.name || '',
       email: msg.email || '',
-      subject: msg.subject || '',
+      subject: msg.subject || 'General Inquiry',
       message: msg.message || '',
-      date: new Date().toISOString(),
+      date: msg.date || new Date().toISOString(),
       status: 'new',
-      replies: []
-    }]);
-    if (error) throw error;
+      replies: [],
+      deletedAt: null
+    };
+
+    // 1. Sync to local storage
+    try {
+      const localData = JSON.parse(localStorage.getItem('local_contact_messages') || '[]');
+      localData.unshift(newMessage);
+      localStorage.setItem('local_contact_messages', JSON.stringify(localData));
+    } catch (e) {
+      console.warn("Failed to write message to local storage", e);
+    }
+
+    // 2. Sync to Supabase if configured
+    if (SUPABASE_CONFIGURED) {
+      const { error } = await supabase.from('contact_messages').insert([newMessage]);
+      if (error) {
+        console.error("Supabase message save error:", error);
+        throw error;
+      }
+    }
   }
 
   static async markAsRead(id: string) {
     this.checkAdminAuth();
-    const { error } = await supabase
-      .from('contact_messages')
-      .update({ status: 'read' })
-      .eq('id', id)
-      .eq('status', 'new');
-    if (error) throw error;
+
+    // 1. Update in local storage
+    try {
+      const localData = JSON.parse(localStorage.getItem('local_contact_messages') || '[]');
+      const msgIndex = localData.findIndex((m: any) => String(m.id) === String(id));
+      if (msgIndex > -1) {
+        localData[msgIndex].status = 'read';
+        localStorage.setItem('local_contact_messages', JSON.stringify(localData));
+      }
+    } catch (e) {}
+
+    // 2. Update in Supabase
+    if (SUPABASE_CONFIGURED) {
+      const { error } = await supabase
+        .from('contact_messages')
+        .update({ status: 'read' })
+        .eq('id', id)
+        .eq('status', 'new');
+      if (error) throw error;
+    }
   }
 
   static async replyToMessage(id: string, text: string) {
     this.checkAdminAuth();
-    const { data: message } = await supabase.from('contact_messages').select('replies').eq('id', id).single();
-    if (message) {
-      const replies = [...(message.replies || []), {
-        id: Date.now().toString(),
-        adminName: 'Administrator',
-        text,
-        timestamp: new Date().toISOString(),
-        deliveryStatus: 'delivered'
-      }];
+    const replyItem = {
+      id: Date.now().toString(),
+      adminName: 'Administrator',
+      text,
+      timestamp: new Date().toISOString(),
+      deliveryStatus: 'delivered' as const
+    };
+
+    // 1. Update in local storage
+    try {
+      const localData = JSON.parse(localStorage.getItem('local_contact_messages') || '[]');
+      const msgIndex = localData.findIndex((m: any) => String(m.id) === String(id));
+      if (msgIndex > -1) {
+        localData[msgIndex].replies = [...(localData[msgIndex].replies || []), replyItem];
+        localData[msgIndex].status = 'replied';
+        localStorage.setItem('local_contact_messages', JSON.stringify(localData));
+      }
+    } catch (e) {}
+
+    // 2. Update in Supabase
+    if (SUPABASE_CONFIGURED) {
+      const { data: message } = await supabase.from('contact_messages').select('replies').eq('id', id).single();
+      const existingReplies = message?.replies || [];
       const { error } = await supabase
         .from('contact_messages')
-        .update({ replies, status: 'replied' })
+        .update({ 
+          replies: [...existingReplies, replyItem], 
+          status: 'replied' 
+        })
         .eq('id', id);
       if (error) throw error;
     }
@@ -529,8 +605,19 @@ export class MockDB {
 
   static async deleteMessage(id: string) {
     this.checkAdminAuth();
-    const { error } = await supabase.from('contact_messages').delete().eq('id', id);
-    if (error) throw error;
+
+    // 1. Delete from local storage
+    try {
+      const localData = JSON.parse(localStorage.getItem('local_contact_messages') || '[]');
+      const updated = localData.filter((m: any) => String(m.id) !== String(id));
+      localStorage.setItem('local_contact_messages', JSON.stringify(updated));
+    } catch (e) {}
+
+    // 2. Delete from Supabase
+    if (SUPABASE_CONFIGURED) {
+      const { error } = await supabase.from('contact_messages').delete().eq('id', id);
+      if (error) throw error;
+    }
   }
 
   static async getMessageStats() {

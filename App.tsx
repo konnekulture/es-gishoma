@@ -18,7 +18,8 @@ import {
   BookOpen,
   FileText,
   UserPlus,
-  GraduationCap
+  GraduationCap,
+  AlertCircle
 } from 'lucide-react';
 import Home from './pages/Home';
 import About from './pages/About';
