@@ -4,7 +4,7 @@ import { Shield, Eye, Lock, FileText, CheckCircle2 } from 'lucide-react';
 export default function PrivacyPolicy() {
   useEffect(() => {
     // Scroll to top on load
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
   return (

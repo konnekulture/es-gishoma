@@ -246,6 +246,13 @@ const TrafficTracker: React.FC = () => {
       await MockDB.trackPageView(location.pathname);
     };
     track();
+    
+    // Smooth/instant scroll to top on any router path change
+    try {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    } catch (e) {
+      window.scrollTo(0, 0);
+    }
   }, [location.pathname]);
   return null;
 };

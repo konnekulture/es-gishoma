@@ -3,7 +3,7 @@ import { FileText, Award, ShieldAlert, CheckCircle2 } from 'lucide-react';
 
 export default function TermsOfService() {
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
   return (
@@ -15,7 +15,7 @@ export default function TermsOfService() {
         <div className="absolute h-96 w-96 -bottom-48 -right-48 bg-violet-500/20 rounded-full blur-3xl" />
         
         <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
-          <div className="inline-flex p-3 bg-indigo-505/10 text-indigo-400 rounded-2xl mb-6 border border-indigo-500/20">
+          <div className="inline-flex p-3 bg-indigo-500/10 text-indigo-400 rounded-2xl mb-6 border border-indigo-500/20">
             <FileText className="w-8 h-8" />
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">Terms of Service</h1>
