@@ -30,6 +30,8 @@ import Contact from './pages/Contact';
 import Curriculum from './pages/Curriculum';
 import Examinations from './pages/Examinations';
 import Alumni from './pages/Alumni';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import Login from './pages/admin/Login';
 import Dashboard from './pages/admin/Dashboard';
 import ManageAnnouncements from './pages/admin/ManageAnnouncements';
@@ -302,8 +304,8 @@ const Footer: React.FC = () => {
             <p className="text-indigo-500/80 font-medium">Developed by Chretien Delphin</p>
           </div>
           <div className="flex space-x-6">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+            <Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</Link>
           </div>
         </div>
       </div>
@@ -421,6 +423,8 @@ export default function App() {
             <Route path="/staff" element={<StaffPage />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
             
             {/* Admin Routes */}
             <Route path="/admin/*" element={
