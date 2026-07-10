@@ -29,6 +29,15 @@ export interface BeforeInstallPromptEvent extends Event {
 let globalDeferredPrompt: BeforeInstallPromptEvent | null = null;
 const promptListeners = new Set<(prompt: BeforeInstallPromptEvent | null) => void>();
 
+// Check if app is rendered in an iframe
+export function isInIframe() {
+  try {
+    return window.self !== window.top;
+  } catch (e) {
+    return true;
+  }
+}
+
 // Global downloading states and triggers
 let globalSetDownloadingState: ((state: { isOpen: boolean; onComplete?: () => void }) => void) | null = null;
 
@@ -66,7 +75,7 @@ export const DownloadingOverlay: React.FC = () => {
     let currentProgress = 0;
     const interval = setInterval(() => {
       // Increase progress by random increments
-      currentProgress += Math.floor(Math.random() * 6) + 4; // 4% to 10%
+      currentProgress += Math.floor(Math.random() * 8) + 6; // 6% to 14%
       if (currentProgress >= 100) {
         currentProgress = 100;
         clearInterval(interval);
@@ -78,13 +87,13 @@ export const DownloadingOverlay: React.FC = () => {
           if (state.onComplete) {
             state.onComplete();
           }
-        }, 500);
+        }, 600);
       } else {
         if (currentProgress < 20) {
           setStatusText('Downloading optimized visual assets...');
         } else if (currentProgress < 45) {
           setStatusText('Configuring offline service protocols...');
-        } else if (currentProgress < 70) {
+        } else if (currentProgress < 75) {
           setStatusText('Caching school directories and portal databases...');
         } else if (currentProgress < 90) {
           setStatusText('Compiling administrative framework security layers...');
@@ -93,7 +102,7 @@ export const DownloadingOverlay: React.FC = () => {
         }
       }
       setProgress(currentProgress);
-    }, 100);
+    }, 80);
 
     return () => clearInterval(interval);
   }, [state.isOpen, state.onComplete]);
@@ -139,6 +148,62 @@ export const DownloadingOverlay: React.FC = () => {
         <div className="pt-3 border-t border-slate-800/60 flex items-center justify-center gap-2 text-slate-500 text-xs font-medium">
           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
           <span>Verified security configuration & cache files</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Iframe Security Warning & Redirection modal
+export const IframeRedirectModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+}> = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  const handleOpenTab = () => {
+    window.open(window.location.href, '_blank');
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 flex flex-col animate-in zoom-in-95 duration-300 p-6 space-y-6">
+        <div className="flex items-center space-x-3">
+          <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-100">
+            <Sparkles className="w-6 h-6 animate-pulse" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Install ES GISHOMA</h3>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Browser Security Verification</p>
+          </div>
+        </div>
+
+        <p className="text-slate-600 text-sm leading-relaxed">
+          Because this app is currently open inside a development preview window, your browser's security system restricts direct installation.
+        </p>
+
+        <div className="p-4 bg-indigo-50/50 border border-indigo-100/50 rounded-2xl text-xs text-indigo-950 flex gap-3">
+          <Info className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
+          <p className="leading-relaxed font-medium">
+            To install the app on your Phone or PC, we will open it in a secure, main browser tab where you can click the <strong className="font-bold">Download App</strong> button and get it on your home screen immediately!
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 pt-2">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl text-sm transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleOpenTab}
+            className="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-100"
+          >
+            <span>Open in New Tab</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </div>
@@ -219,16 +284,21 @@ export function usePWAInstall() {
 
   const triggerInstall = async (): Promise<'accepted' | 'dismissed' | 'manual'> => {
     if (installPrompt) {
-      installPrompt.prompt();
-      const choiceResult = await installPrompt.userChoice;
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-        globalDeferredPrompt = null;
-        setInstallPrompt(null);
-        return 'accepted';
-      } else {
-        console.log('User dismissed the install prompt');
-        return 'dismissed';
+      try {
+        installPrompt.prompt();
+        const choiceResult = await installPrompt.userChoice;
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+          globalDeferredPrompt = null;
+          setInstallPrompt(null);
+          return 'accepted';
+        } else {
+          console.log('User dismissed the install prompt');
+          return 'dismissed';
+        }
+      } catch (err) {
+        console.error('Failed to trigger PWA install prompt:', err);
+        return 'manual';
       }
     }
     return 'manual';
@@ -463,10 +533,11 @@ export const InstallInstructionsModal: React.FC<{
 export const InstallAppBanner: React.FC = () => {
   const { installPrompt, isStandalone, isDismissed, triggerInstall, dismissBanner } = usePWAInstall();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isIframeOpen, setIsIframeOpen] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
 
   useEffect(() => {
-    // Show only after a brief delay (e.g. 2 seconds) to avoid immediate visual clutter
+    // Show only after a brief delay (e.g. 2.5 seconds) to avoid immediate visual clutter
     if (!isStandalone && !isDismissed) {
       const timer = setTimeout(() => {
         setShouldShow(true);
@@ -479,13 +550,28 @@ export const InstallAppBanner: React.FC = () => {
 
   if (!shouldShow) return null;
 
-  const handleInstallClick = () => {
-    triggerGlobalDownload(async () => {
-      const outcome = await triggerInstall();
-      if (outcome === 'manual') {
-        setIsModalOpen(true);
-      }
-    });
+  const handleInstallClick = async () => {
+    // If inside an iframe, open redirection instructions
+    if (isInIframe()) {
+      setIsIframeOpen(true);
+      return;
+    }
+
+    if (!installPrompt) {
+      setIsModalOpen(true);
+      return;
+    }
+
+    // Trigger browser install prompt synchronously
+    const outcome = await triggerInstall();
+    if (outcome === 'accepted') {
+      // Trigger loader screen upon confirmation
+      triggerGlobalDownload(() => {
+        console.log('Loader complete');
+      });
+    } else if (outcome === 'manual') {
+      setIsModalOpen(true);
+    }
   };
 
   return (
@@ -534,7 +620,13 @@ export const InstallAppBanner: React.FC = () => {
               </button>
               
               <button 
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  if (isInIframe()) {
+                    setIsIframeOpen(true);
+                  } else {
+                    setIsModalOpen(true);
+                  }
+                }}
                 className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-all"
               >
                 How?
@@ -547,6 +639,10 @@ export const InstallAppBanner: React.FC = () => {
       <InstallInstructionsModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+      <IframeRedirectModal
+        isOpen={isIframeOpen}
+        onClose={() => setIsIframeOpen(false)}
       />
       <DownloadingOverlay />
     </>
@@ -561,6 +657,7 @@ export const InstallAppButton: React.FC<{
 }> = ({ className = '', variant = 'nav', onClickAction }) => {
   const { installPrompt, isStandalone, triggerInstall } = usePWAInstall();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isIframeOpen, setIsIframeOpen] = useState(false);
 
   // If already loaded as standalone PWA app, hide button to keep UI clean and honest
   if (isStandalone) {
@@ -575,7 +672,7 @@ export const InstallAppButton: React.FC<{
     return null;
   }
 
-  const handleInstall = (e: React.MouseEvent) => {
+  const handleInstall = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -583,12 +680,25 @@ export const InstallAppButton: React.FC<{
       onClickAction();
     }
     
-    triggerGlobalDownload(async () => {
-      const outcome = await triggerInstall();
-      if (outcome === 'manual') {
-        setIsModalOpen(true);
-      }
-    });
+    if (isInIframe()) {
+      setIsIframeOpen(true);
+      return;
+    }
+
+    if (!installPrompt) {
+      setIsModalOpen(true);
+      return;
+    }
+
+    // Call browser prompt synchronously on click gesture
+    const outcome = await triggerInstall();
+    if (outcome === 'accepted') {
+      triggerGlobalDownload(() => {
+        console.log('Loader complete');
+      });
+    } else if (outcome === 'manual') {
+      setIsModalOpen(true);
+    }
   };
 
   if (variant === 'nav') {
@@ -605,6 +715,10 @@ export const InstallAppButton: React.FC<{
         <InstallInstructionsModal 
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
+        />
+        <IframeRedirectModal
+          isOpen={isIframeOpen}
+          onClose={() => setIsIframeOpen(false)}
         />
       </>
     );
@@ -624,6 +738,10 @@ export const InstallAppButton: React.FC<{
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         />
+        <IframeRedirectModal
+          isOpen={isIframeOpen}
+          onClose={() => setIsIframeOpen(false)}
+        />
       </>
     );
   }
@@ -640,6 +758,10 @@ export const InstallAppButton: React.FC<{
         <InstallInstructionsModal 
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
+        />
+        <IframeRedirectModal
+          isOpen={isIframeOpen}
+          onClose={() => setIsIframeOpen(false)}
         />
       </>
     );
@@ -659,6 +781,11 @@ export const InstallAppButton: React.FC<{
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+      <IframeRedirectModal
+        isOpen={isIframeOpen}
+        onClose={() => setIsIframeOpen(false)}
+      />
     </>
   );
 };
+
