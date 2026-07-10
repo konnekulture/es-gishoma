@@ -7,12 +7,8 @@ import {
   X, 
   Info, 
   CheckCircle2, 
-  Monitor, 
-  ChevronRight, 
-  HelpCircle,
   Sparkles,
-  ArrowRight,
-  Menu
+  ArrowRight
 } from 'lucide-react';
 
 // Define standard types for the PWA install prompt event
@@ -41,192 +37,13 @@ export function isInIframe() {
 // Global downloading states and triggers
 let globalSetDownloadingState: ((state: { isOpen: boolean; onComplete?: () => void }) => void) | null = null;
 
-export function triggerGlobalDownload(onComplete: () => void) {
+export function triggerGlobalDownload(onComplete?: () => void) {
   if (globalSetDownloadingState) {
     globalSetDownloadingState({ isOpen: true, onComplete });
   } else {
     // Fallback if component is not mounted
-    onComplete();
+    if (onComplete) onComplete();
   }
-}
-
-// Full screen download progress overlay
-export const DownloadingOverlay: React.FC = () => {
-  const [state, setState] = useState<{ isOpen: boolean; onComplete?: () => void }>({ isOpen: false });
-  const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState('Initiating download...');
-
-  useEffect(() => {
-    globalSetDownloadingState = setState;
-    return () => {
-      globalSetDownloadingState = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!state.isOpen) {
-      setProgress(0);
-      return;
-    }
-
-    setProgress(0);
-    setStatusText('Connecting to ES GISHOMA secure server...');
-
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      // Increase progress by random increments
-      currentProgress += Math.floor(Math.random() * 8) + 6; // 6% to 14%
-      if (currentProgress >= 100) {
-        currentProgress = 100;
-        clearInterval(interval);
-        setStatusText('Verification complete! Launching system installer...');
-        
-        // Wait briefly at 100% then fire onComplete
-        setTimeout(() => {
-          setState({ isOpen: false });
-          if (state.onComplete) {
-            state.onComplete();
-          }
-        }, 600);
-      } else {
-        if (currentProgress < 20) {
-          setStatusText('Downloading optimized visual assets...');
-        } else if (currentProgress < 45) {
-          setStatusText('Configuring offline service protocols...');
-        } else if (currentProgress < 75) {
-          setStatusText('Caching school directories and portal databases...');
-        } else if (currentProgress < 90) {
-          setStatusText('Compiling administrative framework security layers...');
-        } else {
-          setStatusText('Finalizing application build files...');
-        }
-      }
-      setProgress(currentProgress);
-    }, 80);
-
-    return () => clearInterval(interval);
-  }, [state.isOpen, state.onComplete]);
-
-  if (!state.isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-slate-950/85 backdrop-blur-md text-white px-6 animate-in fade-in duration-300">
-      <div className="max-w-md w-full text-center space-y-6 p-8 bg-slate-900/60 border border-slate-800/80 rounded-3xl relative overflow-hidden shadow-2xl">
-        {/* Accent ambient glows */}
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        {/* Animated Icon Container */}
-        <div className="relative inline-flex items-center justify-center">
-          <div className="absolute inset-0 bg-indigo-500/10 rounded-full blur-xl animate-pulse" />
-          <div className="relative p-5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl">
-            <Download className="w-10 h-10 animate-bounce" />
-          </div>
-        </div>
-
-        {/* Text Details */}
-        <div className="space-y-1.5">
-          <h3 className="text-xl font-bold tracking-tight">Downloading ES GISHOMA</h3>
-          <p className="text-indigo-400 text-xs uppercase tracking-widest font-semibold min-h-[16px]">{statusText}</p>
-        </div>
-
-        {/* Progress Bar & Percentage */}
-        <div className="space-y-2.5">
-          <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden p-[1px] border border-slate-700/50">
-            <div 
-              className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full rounded-full transition-all duration-100 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-slate-400 px-1 font-mono">
-            <span>Progress</span>
-            <span className="font-bold text-indigo-400">{progress}%</span>
-          </div>
-        </div>
-
-        {/* Security / Quality details */}
-        <div className="pt-3 border-t border-slate-800/60 flex items-center justify-center gap-2 text-slate-500 text-xs font-medium">
-          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-          <span>Verified security configuration & cache files</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Iframe Security Warning & Redirection modal
-export const IframeRedirectModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-}> = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
-
-  const handleOpenTab = () => {
-    window.open(window.location.href, '_blank');
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 flex flex-col animate-in zoom-in-95 duration-300 p-6 space-y-6">
-        <div className="flex items-center space-x-3">
-          <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-100">
-            <Sparkles className="w-6 h-6 animate-pulse" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">Install ES GISHOMA</h3>
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Browser Security Verification</p>
-          </div>
-        </div>
-
-        <p className="text-slate-600 text-sm leading-relaxed">
-          Because this app is currently open inside a development preview window, your browser's security system restricts direct installation.
-        </p>
-
-        <div className="p-4 bg-indigo-50/50 border border-indigo-100/50 rounded-2xl text-xs text-indigo-950 flex gap-3">
-          <Info className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
-          <p className="leading-relaxed font-medium">
-            To install the app on your Phone or PC, we will open it in a secure, main browser tab where you can click the <strong className="font-bold">Download App</strong> button and get it on your home screen immediately!
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl text-sm transition-all"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleOpenTab}
-            className="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-100"
-          >
-            <span>Open in New Tab</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export function initPWAInstallListener() {
-  if (typeof window === 'undefined') return;
-
-  window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevent Chrome 67 and earlier from automatically showing the prompt
-    e.preventDefault();
-    // Stash the event so it can be triggered later.
-    globalDeferredPrompt = e as BeforeInstallPromptEvent;
-    // Notify all active listeners
-    promptListeners.forEach(listener => listener(globalDeferredPrompt));
-  });
-
-  window.addEventListener('appinstalled', () => {
-    console.log('ES GISHOMA App was successfully installed!');
-    globalDeferredPrompt = null;
-    promptListeners.forEach(listener => listener(null));
-  });
 }
 
 // React custom hook to hook into PWA installation status
@@ -342,6 +159,23 @@ export function getMobilePlatform() {
   return { isIOS, isAndroid, isMobile };
 }
 
+// PWA listener initialization
+export function initPWAInstallListener() {
+  if (typeof window === 'undefined') return;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    globalDeferredPrompt = e as BeforeInstallPromptEvent;
+    promptListeners.forEach(listener => listener(globalDeferredPrompt));
+  });
+
+  window.addEventListener('appinstalled', () => {
+    console.log('ES GISHOMA App was successfully installed!');
+    globalDeferredPrompt = null;
+    promptListeners.forEach(listener => listener(null));
+  });
+}
+
 // 1. Unified installation instructions modal for manual additions (e.g. iOS or Safari)
 export const InstallInstructionsModal: React.FC<{
   isOpen: boolean;
@@ -352,7 +186,7 @@ export const InstallInstructionsModal: React.FC<{
   const { isIOS, isAndroid } = getMobilePlatform();
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
         {/* Header */}
         <div className="bg-gradient-to-br from-indigo-600 to-violet-700 text-white p-6 relative">
@@ -377,12 +211,11 @@ export const InstallInstructionsModal: React.FC<{
 
         {/* Content */}
         <div className="p-6 overflow-y-auto space-y-6 custom-scrollbar flex-1">
-          {/* iOS Safari Instructions */}
           {isIOS ? (
             <div className="space-y-4">
               <div className="p-3 bg-amber-50 border border-amber-100 text-amber-800 text-xs rounded-xl flex items-start gap-2.5">
                 <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>iOS does not allow automated website downloads. You can easily add it manually in 5 seconds using Safari browser.</span>
+                <span>iOS does not allow automated PWA downloads. You can easily add it manually in 5 seconds using Safari browser.</span>
               </div>
               <h4 className="font-bold text-slate-900 text-sm">Step-by-Step Instructions:</h4>
               <ol className="space-y-4">
@@ -458,7 +291,6 @@ export const InstallInstructionsModal: React.FC<{
               </ol>
             </div>
           ) : (
-            /* General / Desktop Instructions */
             <div className="space-y-4">
               <h4 className="font-bold text-slate-900 text-sm">Install via Browser Bar:</h4>
               <p className="text-slate-600 text-sm">You can download and run ES GISHOMA as a fast, offline-ready desktop app:</p>
@@ -491,7 +323,6 @@ export const InstallInstructionsModal: React.FC<{
             </div>
           )}
 
-          {/* Feature List */}
           <div className="pt-4 border-t border-slate-100">
             <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">PWA Application Benefits:</h5>
             <div className="grid grid-cols-2 gap-3">
@@ -529,11 +360,267 @@ export const InstallInstructionsModal: React.FC<{
   );
 };
 
-// 2. Floating Toast/Banner at the bottom-left corner of the viewport
-export const InstallAppBanner: React.FC = () => {
-  const { installPrompt, isStandalone, isDismissed, triggerInstall, dismissBanner } = usePWAInstall();
+// Iframe Security Warning & Redirection modal
+export const IframeRedirectModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+}> = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  const handleOpenTab = () => {
+    window.open(window.location.href, '_blank');
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 flex flex-col animate-in zoom-in-95 duration-300 p-6 space-y-6">
+        <div className="flex items-center space-x-3">
+          <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-100">
+            <Sparkles className="w-6 h-6 animate-pulse" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Install ES GISHOMA</h3>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Browser Security Verification</p>
+          </div>
+        </div>
+
+        <p className="text-slate-600 text-sm leading-relaxed">
+          Because this app is currently open inside a development preview window, your browser's security system restricts direct installation.
+        </p>
+
+        <div className="p-4 bg-indigo-50/50 border border-indigo-100/50 rounded-2xl text-xs text-indigo-950 flex gap-3">
+          <Info className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
+          <p className="leading-relaxed font-medium">
+            To install the app on your Phone or PC, we will open it in a secure, main browser tab where you can click the <strong className="font-bold">Download App</strong> button and get it on your home screen immediately!
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 pt-2">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl text-sm transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleOpenTab}
+            className="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-100"
+          >
+            <span>Open in New Tab</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Full screen download progress overlay (unconditionally mounted at root level)
+export const DownloadingOverlay: React.FC = () => {
+  const [state, setState] = useState<{ isOpen: boolean; onComplete?: () => void }>({ isOpen: false });
+  const [progress, setProgress] = useState(0);
+  const [statusText, setStatusText] = useState('Initiating download...');
+  const [showGestureButton, setShowGestureButton] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isIframeOpen, setIsIframeOpen] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
+
+  const { installPrompt, triggerInstall } = usePWAInstall();
+
+  useEffect(() => {
+    globalSetDownloadingState = setState;
+    return () => {
+      globalSetDownloadingState = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!state.isOpen) {
+      setProgress(0);
+      setShowGestureButton(false);
+      setIsFinished(false);
+      return;
+    }
+
+    setProgress(0);
+    setShowGestureButton(false);
+    setIsFinished(false);
+    setStatusText('Connecting to ES GISHOMA secure server...');
+
+    let currentProgress = 0;
+    const interval = setInterval(() => {
+      currentProgress += Math.floor(Math.random() * 8) + 6; // 6% to 14%
+      if (currentProgress >= 100) {
+        currentProgress = 100;
+        clearInterval(interval);
+        setStatusText('Verification complete! Preparing installer...');
+        setIsFinished(true);
+        
+        setTimeout(async () => {
+          if (isInIframe()) {
+            setIsIframeOpen(true);
+            setState({ isOpen: false });
+          } else if (installPrompt) {
+            try {
+              const outcome = await triggerInstall();
+              if (outcome === 'accepted') {
+                setStatusText('Installation successful!');
+                setTimeout(() => {
+                  setState({ isOpen: false });
+                }, 1500);
+              } else if (outcome === 'dismissed') {
+                setState({ isOpen: false });
+              } else {
+                setStatusText('System confirmation required');
+                setShowGestureButton(true);
+              }
+            } catch (err) {
+              console.warn('Direct prompt failed, showing confirmation gesture:', err);
+              setStatusText('System confirmation required');
+              setShowGestureButton(true);
+            }
+          } else {
+            // No direct browser PWA trigger (iOS/Safari/Installed/Fallback)
+            setIsModalOpen(true);
+            setState({ isOpen: false });
+          }
+
+          if (state.onComplete) {
+            state.onComplete();
+          }
+        }, 1000);
+      } else {
+        if (currentProgress < 20) {
+          setStatusText('Downloading optimized visual assets...');
+        } else if (currentProgress < 45) {
+          setStatusText('Configuring offline service protocols...');
+        } else if (currentProgress < 75) {
+          setStatusText('Caching school directories and portal databases...');
+        } else if (currentProgress < 90) {
+          setStatusText('Compiling administrative framework security layers...');
+        } else {
+          setStatusText('Finalizing application build files...');
+        }
+      }
+      setProgress(currentProgress);
+    }, 80);
+
+    return () => clearInterval(interval);
+  }, [state.isOpen, state.onComplete, installPrompt, triggerInstall]);
+
+  const handleManualTrigger = async () => {
+    try {
+      const outcome = await triggerInstall();
+      if (outcome === 'accepted' || outcome === 'dismissed') {
+        setState({ isOpen: false });
+      } else {
+        setIsModalOpen(true);
+        setState({ isOpen: false });
+      }
+    } catch (err) {
+      setIsModalOpen(true);
+      setState({ isOpen: false });
+    }
+  };
+
+  if (!state.isOpen) {
+    return (
+      <>
+        <InstallInstructionsModal 
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+        <IframeRedirectModal
+          isOpen={isIframeOpen}
+          onClose={() => setIsIframeOpen(false)}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-slate-950/85 backdrop-blur-md text-white px-6 animate-in fade-in duration-300">
+        <div className="max-w-md w-full text-center space-y-6 p-8 bg-slate-900/60 border border-slate-800/80 rounded-3xl relative overflow-hidden shadow-2xl">
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Animated Icon */}
+          <div className="relative inline-flex items-center justify-center">
+            <div className="absolute inset-0 bg-indigo-500/10 rounded-full blur-xl animate-pulse" />
+            <div className="relative p-5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl">
+              {isFinished ? (
+                <CheckCircle2 className="w-10 h-10 text-emerald-400 animate-scale-in" />
+              ) : (
+                <Download className="w-10 h-10 animate-bounce" />
+              )}
+            </div>
+          </div>
+
+          {/* Text Info */}
+          <div className="space-y-1.5">
+            <h3 className="text-xl font-bold tracking-tight">
+              {isFinished ? 'App Prepared Successfully' : 'Downloading ES GISHOMA'}
+            </h3>
+            <p className="text-indigo-400 text-xs uppercase tracking-widest font-semibold min-h-[16px]">{statusText}</p>
+          </div>
+
+          {/* Progress bar */}
+          {!showGestureButton && (
+            <div className="space-y-2.5">
+              <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden p-[1px] border border-slate-700/50">
+                <div 
+                  className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full rounded-full transition-all duration-100 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-slate-400 px-1 font-mono">
+                <span>Progress</span>
+                <span className="font-bold text-indigo-400">{progress}%</span>
+              </div>
+            </div>
+          )}
+
+          {/* Prompt gesture click button */}
+          {showGestureButton && (
+            <div className="space-y-3 pt-2 animate-in zoom-in-95 duration-200">
+              <p className="text-xs text-slate-300 leading-relaxed max-w-sm mx-auto">
+                Your browser requires a security confirmation click to authorize the home screen installation.
+              </p>
+              <button
+                onClick={handleManualTrigger}
+                className="w-full py-3.5 px-6 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-2xl text-sm transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Smartphone className="w-4 h-4 animate-pulse" />
+                <span>Authorize & Install Now</span>
+              </button>
+            </div>
+          )}
+
+          {/* Status Verification */}
+          <div className="pt-3 border-t border-slate-800/60 flex items-center justify-center gap-2 text-slate-500 text-xs font-medium">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+            <span>Verified security configuration & cache files</span>
+          </div>
+        </div>
+      </div>
+
+      <InstallInstructionsModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+      <IframeRedirectModal
+        isOpen={isIframeOpen}
+        onClose={() => setIsIframeOpen(false)}
+      />
+    </>
+  );
+};
+
+// 2. Floating Toast/Banner at the bottom-left corner of the viewport
+export const InstallAppBanner: React.FC = () => {
+  const { isStandalone, isDismissed, dismissBanner } = usePWAInstall();
   const [shouldShow, setShouldShow] = useState(false);
 
   useEffect(() => {
@@ -550,102 +637,69 @@ export const InstallAppBanner: React.FC = () => {
 
   if (!shouldShow) return null;
 
-  const handleInstallClick = async () => {
-    // If inside an iframe, open redirection instructions
-    if (isInIframe()) {
-      setIsIframeOpen(true);
-      return;
-    }
-
-    if (!installPrompt) {
-      setIsModalOpen(true);
-      return;
-    }
-
-    // Trigger browser install prompt synchronously
-    const outcome = await triggerInstall();
-    if (outcome === 'accepted') {
-      // Trigger loader screen upon confirmation
-      triggerGlobalDownload(() => {
-        console.log('Loader complete');
-      });
-    } else if (outcome === 'manual') {
-      setIsModalOpen(true);
-    }
+  const handleInstallClick = () => {
+    triggerGlobalDownload();
   };
 
   return (
-    <>
-      <div className="fixed bottom-4 left-4 right-4 md:right-auto md:max-w-md z-40 animate-in slide-in-from-bottom-5 duration-500">
-        <div className="bg-slate-900 text-white rounded-3xl p-5 shadow-2xl border border-slate-800 flex items-start gap-4 relative overflow-hidden">
-          {/* Accent light highlights */}
-          <div className="absolute h-40 w-40 -top-20 -left-20 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute h-40 w-40 -bottom-20 -right-20 bg-violet-500/15 rounded-full blur-2xl pointer-events-none" />
+    <div className="fixed bottom-4 left-4 right-4 md:right-auto md:max-w-md z-40 animate-in slide-in-from-bottom-5 duration-500">
+      <div className="bg-slate-900 text-white rounded-3xl p-5 shadow-2xl border border-slate-800 flex items-start gap-4 relative overflow-hidden">
+        <div className="absolute h-40 w-40 -top-20 -left-20 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute h-40 w-40 -bottom-20 -right-20 bg-violet-500/15 rounded-full blur-2xl pointer-events-none" />
 
-          {/* Dismiss button */}
-          <button 
-            onClick={dismissBanner}
-            className="absolute top-3 right-3 text-slate-400 hover:text-white hover:bg-slate-800/80 p-1.5 rounded-full transition-all"
-            aria-label="Dismiss notification"
-          >
-            <X className="w-4 h-4" />
-          </button>
+        {/* Dismiss button */}
+        <button 
+          onClick={dismissBanner}
+          className="absolute top-3 right-3 text-slate-400 hover:text-white hover:bg-slate-800/80 p-1.5 rounded-full transition-all cursor-pointer"
+          aria-label="Dismiss notification"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
-          {/* Icon Column */}
-          <div className="p-3 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl shrink-0">
-            <Smartphone className="w-6 h-6 animate-pulse" />
+        {/* Icon Column */}
+        <div className="p-3 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl shrink-0">
+          <Smartphone className="w-6 h-6 animate-pulse" />
+        </div>
+
+        {/* Text and Actions */}
+        <div className="flex-1 space-y-3 pr-4">
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">Offline App</span>
+              <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+            </div>
+            <h4 className="font-bold text-sm text-white mt-0.5">Add ES GISHOMA to Home Screen</h4>
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              Download our lightweight, fast web application for quick offline-enabled academic and portal access.
+            </p>
           </div>
-
-          {/* Text and Actions */}
-          <div className="flex-1 space-y-3 pr-4">
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">Offline App</span>
-                <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-              </div>
-              <h4 className="font-bold text-sm text-white mt-0.5">Add ES GISHOMA to Home Screen</h4>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                Download our lightweight, fast web application for quick offline-enabled academic and portal access.
-              </p>
-            </div>
+          
+          <div className="flex items-center gap-2.5">
+            <button 
+              onClick={handleInstallClick}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg shadow-indigo-900/30 group cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Download App</span>
+              <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+            </button>
             
-            <div className="flex items-center gap-2.5">
-              <button 
-                onClick={handleInstallClick}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg shadow-indigo-900/30 group cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Download App</span>
-                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-              </button>
-              
-              <button 
-                onClick={() => {
-                  if (isInIframe()) {
-                    setIsIframeOpen(true);
-                  } else {
-                    setIsModalOpen(true);
-                  }
-                }}
-                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-all"
-              >
-                How?
-              </button>
-            </div>
+            <button 
+              onClick={() => {
+                if (isInIframe()) {
+                  triggerGlobalDownload();
+                } else {
+                  triggerGlobalDownload();
+                }
+              }}
+              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            >
+              How?
+            </button>
           </div>
         </div>
       </div>
-
-      <InstallInstructionsModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
-      <IframeRedirectModal
-        isOpen={isIframeOpen}
-        onClose={() => setIsIframeOpen(false)}
-      />
-      <DownloadingOverlay />
-    </>
+    </div>
   );
 };
 
@@ -655,9 +709,7 @@ export const InstallAppButton: React.FC<{
   variant?: 'nav' | 'footer' | 'hero' | 'mobile';
   onClickAction?: () => void;
 }> = ({ className = '', variant = 'nav', onClickAction }) => {
-  const { installPrompt, isStandalone, triggerInstall } = usePWAInstall();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isIframeOpen, setIsIframeOpen] = useState(false);
+  const { isStandalone } = usePWAInstall();
 
   // If already loaded as standalone PWA app, hide button to keep UI clean and honest
   if (isStandalone) {
@@ -672,7 +724,7 @@ export const InstallAppButton: React.FC<{
     return null;
   }
 
-  const handleInstall = async (e: React.MouseEvent) => {
+  const handleInstall = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -680,112 +732,53 @@ export const InstallAppButton: React.FC<{
       onClickAction();
     }
     
-    if (isInIframe()) {
-      setIsIframeOpen(true);
-      return;
-    }
-
-    if (!installPrompt) {
-      setIsModalOpen(true);
-      return;
-    }
-
-    // Call browser prompt synchronously on click gesture
-    const outcome = await triggerInstall();
-    if (outcome === 'accepted') {
-      triggerGlobalDownload(() => {
-        console.log('Loader complete');
-      });
-    } else if (outcome === 'manual') {
-      setIsModalOpen(true);
-    }
+    triggerGlobalDownload();
   };
 
   if (variant === 'nav') {
     return (
-      <>
-        <button 
-          onClick={handleInstall}
-          className={`flex items-center space-x-1 px-3 py-1.5 bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 rounded-full text-xs font-semibold transition-all cursor-pointer ${className}`}
-          title="Install app to your home screen"
-        >
-          <Download className="w-3.5 h-3.5" />
-          <span>Download App</span>
-        </button>
-        <InstallInstructionsModal 
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-        />
-        <IframeRedirectModal
-          isOpen={isIframeOpen}
-          onClose={() => setIsIframeOpen(false)}
-        />
-      </>
+      <button 
+        onClick={handleInstall}
+        className={`flex items-center space-x-1 px-3 py-1.5 bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 rounded-full text-xs font-semibold transition-all cursor-pointer ${className}`}
+        title="Install app to your home screen"
+      >
+        <Download className="w-3.5 h-3.5" />
+        <span>Download App</span>
+      </button>
     );
   }
 
   if (variant === 'mobile') {
     return (
-      <>
-        <button 
-          onClick={handleInstall}
-          className={`flex items-center space-x-3 p-3 w-full rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors text-left ${className}`}
-        >
-          <Download className="w-5 h-5" />
-          <span className="font-semibold">Download App</span>
-        </button>
-        <InstallInstructionsModal 
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-        />
-        <IframeRedirectModal
-          isOpen={isIframeOpen}
-          onClose={() => setIsIframeOpen(false)}
-        />
-      </>
+      <button 
+        onClick={handleInstall}
+        className={`flex items-center space-x-3 p-3 w-full rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors text-left cursor-pointer ${className}`}
+      >
+        <Download className="w-5 h-5" />
+        <span className="font-semibold">Download App</span>
+      </button>
     );
   }
 
   if (variant === 'footer') {
     return (
-      <>
-        <button 
-          onClick={handleInstall}
-          className={`text-slate-400 hover:text-white transition-colors text-xs font-medium cursor-pointer ${className}`}
-        >
-          Download Desktop/Mobile App
-        </button>
-        <InstallInstructionsModal 
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-        />
-        <IframeRedirectModal
-          isOpen={isIframeOpen}
-          onClose={() => setIsIframeOpen(false)}
-        />
-      </>
+      <button 
+        onClick={handleInstall}
+        className={`text-slate-400 hover:text-white transition-colors text-xs font-medium cursor-pointer ${className}`}
+      >
+        Download Desktop/Mobile App
+      </button>
     );
   }
 
   // Hero / Section layout variant
   return (
-    <>
-      <button 
-        onClick={handleInstall}
-        className={`px-6 py-3.5 bg-white border border-slate-200 hover:border-indigo-600/30 hover:bg-slate-50 text-slate-800 text-sm font-bold rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2.5 cursor-pointer ${className}`}
-      >
-        <Smartphone className="w-5 h-5 text-indigo-600" />
-        <span>Install App</span>
-      </button>
-      <InstallInstructionsModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
-      <IframeRedirectModal
-        isOpen={isIframeOpen}
-        onClose={() => setIsIframeOpen(false)}
-      />
-    </>
+    <button 
+      onClick={handleInstall}
+      className={`px-6 py-3.5 bg-white border border-slate-200 hover:border-indigo-600/30 hover:bg-slate-50 text-slate-800 text-sm font-bold rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2.5 cursor-pointer ${className}`}
+    >
+      <Smartphone className="w-5 h-5 text-indigo-600" />
+      <span>Install App</span>
+    </button>
   );
 };
-

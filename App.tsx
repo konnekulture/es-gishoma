@@ -44,7 +44,7 @@ import ManageAlumni from './pages/admin/ManageAlumni';
 import ManageSite from './pages/admin/ManageSite';
 import { MockDB } from './services/mockDb';
 import { supabase, SUPABASE_CONFIGURED } from './services/supabase';
-import { InstallAppBanner, InstallAppButton } from './pages/InstallAppPrompt';
+import { InstallAppBanner, InstallAppButton, DownloadingOverlay } from './pages/InstallAppPrompt';
 
 // --- Shared Components ---
 
@@ -504,6 +504,7 @@ export default function App() {
         </main>
         <Footer />
         <InstallAppBanner />
+        <DownloadingOverlay />
       </div>
     </Router>
   );

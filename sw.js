@@ -3,8 +3,6 @@ const CACHE_NAME = 'es-gishoma-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './index.tsx',
-  './App.tsx',
   './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Playfair+Display:wght@700;900&display=swap'
