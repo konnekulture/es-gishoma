@@ -2,6 +2,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { initPWAInstallListener } from './pages/InstallAppPrompt';
+
+// Initialize global PWA Install listener
+initPWAInstallListener();
 
 // Register Service Worker for Offline support
 if ('serviceWorker' in navigator) {
