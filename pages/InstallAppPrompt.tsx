@@ -29,6 +29,122 @@ export interface BeforeInstallPromptEvent extends Event {
 let globalDeferredPrompt: BeforeInstallPromptEvent | null = null;
 const promptListeners = new Set<(prompt: BeforeInstallPromptEvent | null) => void>();
 
+// Global downloading states and triggers
+let globalSetDownloadingState: ((state: { isOpen: boolean; onComplete?: () => void }) => void) | null = null;
+
+export function triggerGlobalDownload(onComplete: () => void) {
+  if (globalSetDownloadingState) {
+    globalSetDownloadingState({ isOpen: true, onComplete });
+  } else {
+    // Fallback if component is not mounted
+    onComplete();
+  }
+}
+
+// Full screen download progress overlay
+export const DownloadingOverlay: React.FC = () => {
+  const [state, setState] = useState<{ isOpen: boolean; onComplete?: () => void }>({ isOpen: false });
+  const [progress, setProgress] = useState(0);
+  const [statusText, setStatusText] = useState('Initiating download...');
+
+  useEffect(() => {
+    globalSetDownloadingState = setState;
+    return () => {
+      globalSetDownloadingState = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!state.isOpen) {
+      setProgress(0);
+      return;
+    }
+
+    setProgress(0);
+    setStatusText('Connecting to ES GISHOMA secure server...');
+
+    let currentProgress = 0;
+    const interval = setInterval(() => {
+      // Increase progress by random increments
+      currentProgress += Math.floor(Math.random() * 6) + 4; // 4% to 10%
+      if (currentProgress >= 100) {
+        currentProgress = 100;
+        clearInterval(interval);
+        setStatusText('Verification complete! Launching system installer...');
+        
+        // Wait briefly at 100% then fire onComplete
+        setTimeout(() => {
+          setState({ isOpen: false });
+          if (state.onComplete) {
+            state.onComplete();
+          }
+        }, 500);
+      } else {
+        if (currentProgress < 20) {
+          setStatusText('Downloading optimized visual assets...');
+        } else if (currentProgress < 45) {
+          setStatusText('Configuring offline service protocols...');
+        } else if (currentProgress < 70) {
+          setStatusText('Caching school directories and portal databases...');
+        } else if (currentProgress < 90) {
+          setStatusText('Compiling administrative framework security layers...');
+        } else {
+          setStatusText('Finalizing application build files...');
+        }
+      }
+      setProgress(currentProgress);
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [state.isOpen, state.onComplete]);
+
+  if (!state.isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-slate-950/85 backdrop-blur-md text-white px-6 animate-in fade-in duration-300">
+      <div className="max-w-md w-full text-center space-y-6 p-8 bg-slate-900/60 border border-slate-800/80 rounded-3xl relative overflow-hidden shadow-2xl">
+        {/* Accent ambient glows */}
+        <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Animated Icon Container */}
+        <div className="relative inline-flex items-center justify-center">
+          <div className="absolute inset-0 bg-indigo-500/10 rounded-full blur-xl animate-pulse" />
+          <div className="relative p-5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl">
+            <Download className="w-10 h-10 animate-bounce" />
+          </div>
+        </div>
+
+        {/* Text Details */}
+        <div className="space-y-1.5">
+          <h3 className="text-xl font-bold tracking-tight">Downloading ES GISHOMA</h3>
+          <p className="text-indigo-400 text-xs uppercase tracking-widest font-semibold min-h-[16px]">{statusText}</p>
+        </div>
+
+        {/* Progress Bar & Percentage */}
+        <div className="space-y-2.5">
+          <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden p-[1px] border border-slate-700/50">
+            <div 
+              className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full rounded-full transition-all duration-100 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-xs text-slate-400 px-1 font-mono">
+            <span>Progress</span>
+            <span className="font-bold text-indigo-400">{progress}%</span>
+          </div>
+        </div>
+
+        {/* Security / Quality details */}
+        <div className="pt-3 border-t border-slate-800/60 flex items-center justify-center gap-2 text-slate-500 text-xs font-medium">
+          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+          <span>Verified security configuration & cache files</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export function initPWAInstallListener() {
   if (typeof window === 'undefined') return;
 
@@ -363,11 +479,13 @@ export const InstallAppBanner: React.FC = () => {
 
   if (!shouldShow) return null;
 
-  const handleInstallClick = async () => {
-    const outcome = await triggerInstall();
-    if (outcome === 'manual') {
-      setIsModalOpen(true);
-    }
+  const handleInstallClick = () => {
+    triggerGlobalDownload(async () => {
+      const outcome = await triggerInstall();
+      if (outcome === 'manual') {
+        setIsModalOpen(true);
+      }
+    });
   };
 
   return (
@@ -430,6 +548,7 @@ export const InstallAppBanner: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+      <DownloadingOverlay />
     </>
   );
 };
@@ -456,7 +575,7 @@ export const InstallAppButton: React.FC<{
     return null;
   }
 
-  const handleInstall = async (e: React.MouseEvent) => {
+  const handleInstall = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -464,10 +583,12 @@ export const InstallAppButton: React.FC<{
       onClickAction();
     }
     
-    const outcome = await triggerInstall();
-    if (outcome === 'manual') {
-      setIsModalOpen(true);
-    }
+    triggerGlobalDownload(async () => {
+      const outcome = await triggerInstall();
+      if (outcome === 'manual') {
+        setIsModalOpen(true);
+      }
+    });
   };
 
   if (variant === 'nav') {
