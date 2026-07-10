@@ -3,7 +3,7 @@
   "name": "ES GISHOMA Management System",
   "short_name": "ES GISHOMA",
   "description": "Comprehensive school representation and management portal.",
-  "start_url": "./index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#4f46e5",
