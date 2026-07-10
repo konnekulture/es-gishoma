@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Download, 
   Smartphone, 
@@ -99,7 +99,7 @@ export function usePWAInstall() {
     };
   }, []);
 
-  const triggerInstall = async (): Promise<'accepted' | 'dismissed' | 'manual'> => {
+  const triggerInstall = useCallback(async (): Promise<'accepted' | 'dismissed' | 'manual'> => {
     if (installPrompt) {
       try {
         installPrompt.prompt();
@@ -119,25 +119,25 @@ export function usePWAInstall() {
       }
     }
     return 'manual';
-  };
+  }, [installPrompt]);
 
-  const dismissBanner = () => {
+  const dismissBanner = useCallback(() => {
     setIsDismissed(true);
     try {
       localStorage.setItem('pwa_banner_dismissed', 'true');
     } catch (e) {
       console.warn(e);
     }
-  };
+  }, []);
 
-  const resetDismiss = () => {
+  const resetDismiss = useCallback(() => {
     setIsDismissed(false);
     try {
       localStorage.removeItem('pwa_banner_dismissed');
     } catch (e) {
       console.warn(e);
     }
-  };
+  }, []);
 
   return {
     installPrompt,
@@ -428,6 +428,17 @@ export const DownloadingOverlay: React.FC = () => {
 
   const { installPrompt, triggerInstall } = usePWAInstall();
 
+  // Stable references for state, prompt, and handlers
+  const installPromptRef = useRef(installPrompt);
+  const triggerInstallRef = useRef(triggerInstall);
+  const onCompleteRef = useRef(state.onComplete);
+
+  useEffect(() => {
+    installPromptRef.current = installPrompt;
+    triggerInstallRef.current = triggerInstall;
+    onCompleteRef.current = state.onComplete;
+  });
+
   useEffect(() => {
     globalSetDownloadingState = setState;
     return () => {
@@ -461,9 +472,9 @@ export const DownloadingOverlay: React.FC = () => {
           if (isInIframe()) {
             setIsIframeOpen(true);
             setState({ isOpen: false });
-          } else if (installPrompt) {
+          } else if (installPromptRef.current) {
             try {
-              const outcome = await triggerInstall();
+              const outcome = await triggerInstallRef.current();
               if (outcome === 'accepted') {
                 setStatusText('Installation successful!');
                 setTimeout(() => {
@@ -486,8 +497,8 @@ export const DownloadingOverlay: React.FC = () => {
             setState({ isOpen: false });
           }
 
-          if (state.onComplete) {
-            state.onComplete();
+          if (onCompleteRef.current) {
+            onCompleteRef.current();
           }
         }, 1000);
       } else {
@@ -507,7 +518,7 @@ export const DownloadingOverlay: React.FC = () => {
     }, 80);
 
     return () => clearInterval(interval);
-  }, [state.isOpen, state.onComplete, installPrompt, triggerInstall]);
+  }, [state.isOpen]);
 
   const handleManualTrigger = async () => {
     try {
