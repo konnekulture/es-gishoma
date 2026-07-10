@@ -45,6 +45,7 @@ import ManageSite from './pages/admin/ManageSite';
 import { MockDB } from './services/mockDb';
 import { supabase, SUPABASE_CONFIGURED } from './services/supabase';
 import { InstallAppBanner, InstallAppButton, DownloadingOverlay } from './pages/InstallAppPrompt';
+import OfflineScreen from './pages/OfflineScreen';
 
 // --- Shared Components ---
 
@@ -420,6 +421,35 @@ const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
 
 export default function App() {
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Initial check
+    setIsOffline(!navigator.onLine);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleRetry = () => {
+    const online = navigator.onLine;
+    setIsOffline(!online);
+    if (online) {
+      window.location.reload();
+    }
+  };
+
+  if (isOffline) {
+    return <OfflineScreen onRetry={handleRetry} />;
+  }
 
   return (
     <Router>
