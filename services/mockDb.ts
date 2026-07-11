@@ -152,11 +152,14 @@ export class MockDB {
   static checkAdminAuth() {
     const token = localStorage.getItem('adminToken');
     if (!token) throw new Error('Authentication required.');
+    let decoded;
     try {
-      const decoded = JSON.parse(atob(token));
-      if (decoded.exp < Date.now()) throw new Error('Session expired.');
+      decoded = JSON.parse(atob(token));
     } catch (e) {
       throw new Error('Invalid session.');
+    }
+    if (!decoded || !decoded.exp || decoded.exp < Date.now()) {
+      throw new Error('Session expired.');
     }
   }
 
@@ -773,6 +776,13 @@ export class MockDB {
   }
 
   static async getHomeConfig(): Promise<any> {
+    const cached = localStorage.getItem('local_home_config');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {}
+    }
+
     if (!SUPABASE_CONFIGURED) {
       return {
         heroTitle: "Empowering Minds for a Brighter Future",
@@ -789,26 +799,45 @@ export class MockDB {
         console.error('Home config fetch error:', error);
       }
     }
-    return data || {
+    const result = data || {
       heroTitle: "Empowering Minds for a Brighter Future",
       heroSubtitle: "Welcome to ES GISHOMA, a center of academic excellence and character development.",
       heroImage: "https://images.unsplash.com/photo-1523050335392-93851179ae22?auto=format&fit=crop&q=80",
       schoolBrief: "Dedicated to cultivating excellence since 1985...",
       schoolBriefImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1200"
     };
+    localStorage.setItem('local_home_config', JSON.stringify(result));
+    return result;
   }
 
   static async saveHomeConfig(config: any): Promise<void> {
     this.checkAdminAuth();
     
-    // Upload image if it's base64
-    if (config.heroImage && config.heroImage.startsWith('data:')) {
-      config.heroImage = await uploadToSupabase('hero-image', config.heroImage, 'site-assets');
-    }
-    if (config.schoolBriefImage && config.schoolBriefImage.startsWith('data:')) {
-      config.schoolBriefImage = await uploadToSupabase('school-brief', config.schoolBriefImage, 'site-assets');
+    // Save to cache immediately so offline is instantly updated
+    localStorage.setItem('local_home_config', JSON.stringify(config));
+
+    if (!SUPABASE_CONFIGURED) {
+      return;
     }
     
+    // Upload image if it's base64
+    if (config.heroImage && config.heroImage.startsWith('data:')) {
+      try {
+        config.heroImage = await uploadToSupabase('hero-image', config.heroImage, 'site-assets');
+      } catch (e) {
+        console.error('Failed to upload hero image:', e);
+      }
+    }
+    if (config.schoolBriefImage && config.schoolBriefImage.startsWith('data:')) {
+      try {
+        config.schoolBriefImage = await uploadToSupabase('school-brief', config.schoolBriefImage, 'site-assets');
+      } catch (e) {
+        console.error('Failed to upload school brief image:', e);
+      }
+    }
+    
+    localStorage.setItem('local_home_config', JSON.stringify(config));
+
     const { error } = await supabase.from('home_config').upsert({ 
       id: 'current',
       ...config
@@ -817,6 +846,13 @@ export class MockDB {
   }
 
   static async getAboutConfig(): Promise<any> {
+    const cached = localStorage.getItem('local_about_config');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {}
+    }
+
     if (!SUPABASE_CONFIGURED) {
       return {
         aboutHeroImage: "/input_file_0.png",
@@ -825,25 +861,41 @@ export class MockDB {
       };
     }
     const { data, error } = await supabase.from('home_config').select('aboutHeroImage, aboutLegacyImage1, aboutLegacyImage2').eq('id', 'current').single();
-    return data || {
+    const result = data || {
       aboutHeroImage: "/input_file_0.png",
       aboutLegacyImage1: "/input_file_1.png",
       aboutLegacyImage2: "/input_file_1.png"
     };
+    localStorage.setItem('local_about_config', JSON.stringify(result));
+    return result;
   }
 
   static async saveAboutImages(images: any): Promise<void> {
     this.checkAdminAuth();
     
+    localStorage.setItem('local_about_config', JSON.stringify(images));
+
+    if (!SUPABASE_CONFIGURED) {
+      return;
+    }
+    
     if (images.aboutHeroImage?.startsWith('data:')) {
-      images.aboutHeroImage = await uploadToSupabase('about-hero', images.aboutHeroImage, 'site-assets');
+      try {
+        images.aboutHeroImage = await uploadToSupabase('about-hero', images.aboutHeroImage, 'site-assets');
+      } catch (e) {}
     }
     if (images.aboutLegacyImage1?.startsWith('data:')) {
-      images.aboutLegacyImage1 = await uploadToSupabase('about-legacy-1', images.aboutLegacyImage1, 'site-assets');
+      try {
+        images.aboutLegacyImage1 = await uploadToSupabase('about-legacy-1', images.aboutLegacyImage1, 'site-assets');
+      } catch (e) {}
     }
     if (images.aboutLegacyImage2?.startsWith('data:')) {
-      images.aboutLegacyImage2 = await uploadToSupabase('about-legacy-2', images.aboutLegacyImage2, 'site-assets');
+      try {
+        images.aboutLegacyImage2 = await uploadToSupabase('about-legacy-2', images.aboutLegacyImage2, 'site-assets');
+      } catch (e) {}
     }
+
+    localStorage.setItem('local_about_config', JSON.stringify(images));
 
     const { error } = await supabase.from('home_config').upsert({ 
       id: 'current',
