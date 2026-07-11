@@ -74,9 +74,16 @@ async function uploadToSupabase(id: string, data: string, path: string): Promise
 export class MockDB {
   static async seedAdmin() {
     if (!SUPABASE_CONFIGURED) return;
-    const { data: users } = await supabase.from('users').select('*').eq('username', 'Admin');
+    
+    // Check for both 'Admin' and 'admin' in the database
+    const { data: users } = await supabase
+      .from('users')
+      .select('*')
+      .in('username', ['Admin', 'admin']);
+      
+    const hash = await this.hashPassword('kwanda_2026');
+    
     if (!users || users.length === 0) {
-      const hash = await this.hashPassword('kwanda_2026');
       await supabase.from('users').insert([{
         id: 'admin_1',
         name: 'Principal Administrator',
@@ -84,6 +91,16 @@ export class MockDB {
         passwordHash: hash,
         role: 'admin'
       }]);
+    } else {
+      // Update existing admin accounts to the new credentials
+      for (const u of users) {
+        if (u.username === 'admin' || u.username === 'Admin') {
+          await supabase.from('users').update({
+            username: 'Admin',
+            passwordHash: hash
+          }).eq('id', u.id);
+        }
+      }
     }
   }
 
@@ -95,7 +112,16 @@ export class MockDB {
   }
 
   static async login(username: string, password: string, honeypot?: string): Promise<{ token: string; user: User } | null> {
-    if (username === 'Admin' && password === 'kwanda_2026') {
+    if (SUPABASE_CONFIGURED) {
+      try {
+        await this.seedAdmin();
+      } catch (e) {
+        console.error('Failed to update admin user in Supabase:', e);
+      }
+    }
+
+    const isMatched = username.toLowerCase() === 'admin' && password === 'kwanda_2026';
+    if (isMatched) {
       return { 
         token: btoa(JSON.stringify({ id: 'admin_1', username: 'Admin', role: 'admin', exp: Date.now() + 3600000 })), 
         user: { id: 'admin_1', name: 'Principal Administrator', email: 'Admin@esgishoma.edu', role: 'admin' } 
@@ -103,7 +129,6 @@ export class MockDB {
     }
 
     if (!SUPABASE_CONFIGURED) return null;
-    await this.seedAdmin();
     if (honeypot) { await new Promise(r => setTimeout(r, 2000)); return null; }
     
     const { data: user } = await supabase
