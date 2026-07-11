@@ -646,6 +646,7 @@ export class MockDB {
     const replyItem = {
       id: Date.now().toString(),
       adminName: 'Administrator',
+      adminEmail: 'ruzimarwanda@gmail.com',
       text,
       timestamp: new Date().toISOString(),
       deliveryStatus: 'delivered' as const
@@ -674,6 +675,29 @@ export class MockDB {
         })
         .eq('id', id);
       if (error) throw error;
+    }
+  }
+
+  static async getUserMessagesByEmail(email: string): Promise<ContactMessage[]> {
+    const cleanedEmail = email.trim().toLowerCase();
+    if (!SUPABASE_CONFIGURED) {
+      const localData = JSON.parse(localStorage.getItem('local_contact_messages') || '[]');
+      return localData.filter((m: any) => !m.deletedAt && m.email.trim().toLowerCase() === cleanedEmail);
+    }
+    try {
+      const { data, error } = await supabase
+        .from('contact_messages')
+        .select('*')
+        .eq('email', email)
+        .is('deletedAt', null)
+        .order('date', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    } catch (e) {
+      console.error('Fetch user messages error:', e);
+      // Fallback
+      const localData = JSON.parse(localStorage.getItem('local_contact_messages') || '[]');
+      return localData.filter((m: any) => !m.deletedAt && m.email.trim().toLowerCase() === cleanedEmail);
     }
   }
 

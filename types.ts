@@ -70,6 +70,7 @@ export interface ChatReply {
   text: string;
   timestamp: string;
   deliveryStatus: 'delivered' | 'failed';
+  adminEmail?: string;
 }
 
 export interface ContactMessage {
