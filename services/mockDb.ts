@@ -74,13 +74,13 @@ async function uploadToSupabase(id: string, data: string, path: string): Promise
 export class MockDB {
   static async seedAdmin() {
     if (!SUPABASE_CONFIGURED) return;
-    const { data: users } = await supabase.from('users').select('*').eq('username', 'admin');
+    const { data: users } = await supabase.from('users').select('*').eq('username', 'Admin');
     if (!users || users.length === 0) {
-      const hash = await this.hashPassword('admin2026');
+      const hash = await this.hashPassword('kwanda_2026');
       await supabase.from('users').insert([{
         id: 'admin_1',
         name: 'Principal Administrator',
-        username: 'admin',
+        username: 'Admin',
         passwordHash: hash,
         role: 'admin'
       }]);
@@ -95,10 +95,10 @@ export class MockDB {
   }
 
   static async login(username: string, password: string, honeypot?: string): Promise<{ token: string; user: User } | null> {
-    if (username === 'admin' && password === 'admin2026') {
+    if (username === 'Admin' && password === 'kwanda_2026') {
       return { 
-        token: btoa(JSON.stringify({ id: 'admin_1', username: 'admin', role: 'admin', exp: Date.now() + 3600000 })), 
-        user: { id: 'admin_1', name: 'Principal Administrator', email: 'admin@esgishoma.edu', role: 'admin' } 
+        token: btoa(JSON.stringify({ id: 'admin_1', username: 'Admin', role: 'admin', exp: Date.now() + 3600000 })), 
+        user: { id: 'admin_1', name: 'Principal Administrator', email: 'Admin@esgishoma.edu', role: 'admin' } 
       };
     }
 
