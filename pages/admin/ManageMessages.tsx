@@ -1,19 +1,15 @@
 
-import React, { useState, useEffect, FormEvent } from 'react';
-import { Mail, Search, X, Send, Loader2, MessageSquare, Clock, CheckCircle2, AlertTriangle, Trash2, Reply, Sparkles, Filter, ChevronLeft, User, ShieldCheck, Inbox } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Loader2, MessageSquare, Clock, AlertTriangle, Trash2, ChevronLeft, User, Inbox, ShieldCheck } from 'lucide-react';
 import { MockDB } from '../../services/mockDb';
 import { ContactMessage } from '../../types';
 
 export default function ManageMessages() {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'new' | 'replied'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'new' | 'read'>('all');
   const [selectedMsg, setSelectedMsg] = useState<ContactMessage | null>(null);
-  const [replyText, setReplyText] = useState('');
-  const [isSending, setIsSending] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isSuggesting, setIsSuggesting] = useState(false);
-  const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   const [stats, setStats] = useState({ total: 0, new: 0, unread: 0, replied: 0 });
 
@@ -30,7 +26,6 @@ export default function ManageMessages() {
 
   const handleSelectMessage = async (msg: ContactMessage) => {
     setSelectedMsg(msg);
-    setStatusMsg(null);
     if (msg.status === 'new') {
       try {
         await MockDB.markAsRead(msg.id);
@@ -41,48 +36,12 @@ export default function ManageMessages() {
     }
   };
 
-  const handleAISuggest = async () => {
-    if (!selectedMsg) return;
-    setIsSuggesting(true);
-    try {
-      const suggestion = await MockDB.generateAISuggestion(selectedMsg.message);
-      setReplyText(suggestion);
-    } catch (err) {
-      setStatusMsg({ type: 'error', text: 'AI suggestion failed.' });
-    } finally {
-      setIsSuggesting(false);
-    }
-  };
-
-  const handleReply = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!selectedMsg || !replyText.trim()) return;
-
-    setIsSending(true);
-    setStatusMsg(null);
-
-    try {
-      await MockDB.replyToMessage(selectedMsg.id, replyText);
-      setStatusMsg({ type: 'success', text: 'Reply sent successfully.' });
-      setReplyText('');
-      await loadMessages();
-      const updatedMessages = await MockDB.getMessages();
-      const current = updatedMessages.find(m => String(m.id) === String(selectedMsg.id));
-      if (current) setSelectedMsg(current);
-    } catch (err) {
-      setStatusMsg({ type: 'error', text: 'Failed to send reply.' });
-    } finally {
-      setIsSending(false);
-    }
-  };
-
   const handleDelete = async (e: React.MouseEvent | null, id: string) => {
     if (e) e.stopPropagation(); 
     
     if (!window.confirm('WARNING: This message will be permanently removed from all school archives. Proceed?')) return;
     
     setIsDeleting(true);
-    setStatusMsg(null);
 
     try {
       await MockDB.deleteMessage(id);
@@ -106,7 +65,7 @@ export default function ManageMessages() {
     const matchesFilter = 
       activeFilter === 'all' || 
       (activeFilter === 'new' && m.status === 'new') || 
-      (activeFilter === 'replied' && m.status === 'replied');
+      (activeFilter === 'read' && m.status === 'read');
     return matchesSearch && matchesFilter;
   });
 
@@ -120,7 +79,7 @@ export default function ManageMessages() {
           <p className="text-xs sm:text-sm text-slate-500 font-medium">Official school communication hub.</p>
         </div>
         <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-0 custom-scrollbar-hide">
-          {['all', 'new', 'replied'].map((f) => (
+          {['all', 'new', 'read'].map((f) => (
             <button
               key={f}
               onClick={() => setActiveFilter(f as any)}
@@ -128,7 +87,7 @@ export default function ManageMessages() {
                 activeFilter === f ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white text-slate-500 hover:bg-slate-50'
               }`}
             >
-              {f}
+              {f === 'new' ? 'unread' : f}
             </button>
           ))}
         </div>
@@ -170,9 +129,7 @@ export default function ManageMessages() {
                   </div>
                   <p className={`text-[11px] sm:text-xs mb-1.5 sm:mb-2 truncate ${msg.status === 'new' ? 'font-bold text-slate-800' : 'text-slate-500'}`}>{msg.subject}</p>
                   <div className="flex items-center gap-2">
-                    {msg.status === 'replied' ? (
-                      <span className="text-[9px] sm:text-[10px] text-emerald-600 font-black uppercase flex items-center gap-1 shrink-0"><CheckCircle2 className="w-2.5 h-2.5" /> Replied</span>
-                    ) : msg.status === 'new' ? (
+                    {msg.status === 'new' ? (
                       <span className="text-[9px] sm:text-[10px] text-amber-600 font-black uppercase flex items-center gap-1 shrink-0"><AlertTriangle className="w-2.5 h-2.5" /> Unread</span>
                     ) : (
                       <span className="text-[9px] sm:text-[10px] text-slate-400 font-black uppercase flex items-center gap-1 shrink-0"><Clock className="w-2.5 h-2.5" /> Read</span>
@@ -205,7 +162,7 @@ export default function ManageMessages() {
                 <MessageSquare className="w-8 h-8 sm:w-10 sm:h-10" />
               </div>
               <h3 className="text-lg sm:text-xl font-bold">Select a message</h3>
-              <p className="text-xs sm:text-sm mt-2 text-slate-400 text-center">View details and reply to inquiries from students and parents.</p>
+              <p className="text-xs sm:text-sm mt-2 text-slate-400 text-center">View details of inquiries from students, parents, and partners.</p>
             </div>
           ) : (
             <>
@@ -248,68 +205,6 @@ export default function ManageMessages() {
                     </div>
                   </div>
                 </div>
-
-                {selectedMsg.replies.map((rep) => (
-                  <div key={rep.id} className="flex gap-3 sm:gap-4 justify-end">
-                    <div className="max-w-[95%] sm:max-w-2xl">
-                      <div className="bg-indigo-600 p-5 sm:p-6 rounded-2xl sm:rounded-3xl rounded-tr-none text-white shadow-xl shadow-indigo-100 relative">
-                        <div className="flex items-center gap-2 mb-2 text-indigo-200">
-                          <ShieldCheck className="w-3 h-3" />
-                          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Official Response</span>
-                        </div>
-                        <p className="leading-relaxed font-medium text-sm sm:text-base whitespace-pre-wrap break-words">{rep.text}</p>
-                        <div className="absolute -bottom-5 right-0 flex flex-col items-end gap-0.5">
-                           <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(rep.timestamp).toLocaleString()}</span>
-                           <span className="text-[9px] sm:text-[10px] text-emerald-500 font-black uppercase tracking-widest flex items-center gap-1"><CheckCircle2 className="w-2.5 h-2.5" /> Delivered</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="hidden sm:flex w-10 h-10 rounded-xl bg-indigo-100 items-center justify-center text-indigo-600 shrink-0">
-                      <ShieldCheck className="w-5 h-5" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Footer Reply Area */}
-              <div className="p-4 sm:p-6 md:p-8 bg-slate-50/50 border-t border-slate-100 shrink-0">
-                <form onSubmit={handleReply} className="relative bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-[2rem] border border-slate-200 shadow-xl focus-within:ring-4 focus-within:ring-indigo-100/50 transition-all">
-                  {statusMsg && (
-                    <div className={`absolute -top-10 left-4 right-4 p-1.5 rounded-lg text-[9px] sm:text-[10px] font-bold flex items-center justify-center gap-2 animate-in slide-in-from-top-2 z-20 ${
-                      statusMsg.type === 'success' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'
-                    }`}>
-                      {statusMsg.text}
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between mb-2 px-1 gap-2">
-                    <button 
-                      type="button"
-                      onClick={handleAISuggest}
-                      disabled={isSuggesting}
-                      className="flex items-center justify-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all disabled:opacity-50 shrink-0"
-                    >
-                      {isSuggesting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                      AI Suggest
-                    </button>
-                  </div>
-                  <textarea 
-                    required
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Type your official response..."
-                    className="w-full p-2 sm:p-3 bg-transparent outline-none font-medium text-xs sm:text-sm min-h-[60px] sm:min-h-[100px] resize-none custom-scrollbar"
-                  ></textarea>
-                  <div className="flex justify-end pt-2">
-                    <button 
-                      type="submit"
-                      disabled={isSending || !replyText.trim()}
-                      className="w-full sm:w-auto px-6 py-2.5 sm:px-8 sm:py-3 bg-indigo-600 text-white rounded-lg sm:rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:opacity-50 text-sm"
-                    >
-                      {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                      <span>Dispatch Response</span>
-                    </button>
-                  </div>
-                </form>
               </div>
             </>
           )}
