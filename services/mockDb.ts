@@ -81,7 +81,7 @@ export class MockDB {
       .select('*')
       .in('username', ['Admin', 'admin']);
       
-    const hash = await this.hashPassword('kwanda_2026');
+    const hash = await this.hashPassword('admin_2026');
     
     if (!users || users.length === 0) {
       await supabase.from('users').insert([{
@@ -120,7 +120,7 @@ export class MockDB {
       }
     }
 
-    const isMatched = username.toLowerCase() === 'admin' && password === 'kwanda_2026';
+    const isMatched = username.toLowerCase() === 'admin' && password === 'admin_2026';
     if (isMatched) {
       return { 
         token: btoa(JSON.stringify({ id: 'admin_1', username: 'Admin', role: 'admin', exp: Date.now() + 3600000 })), 
