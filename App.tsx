@@ -44,7 +44,6 @@ import ManageAlumni from './pages/admin/ManageAlumni';
 import ManageSite from './pages/admin/ManageSite';
 import { MockDB } from './services/mockDb';
 import { supabase, SUPABASE_CONFIGURED } from './services/supabase';
-import { InstallAppBanner, InstallAppButton, DownloadingOverlay } from './pages/InstallAppPrompt';
 import OfflineScreen from './pages/OfflineScreen';
 
 // --- Shared Components ---
@@ -153,8 +152,6 @@ const Navbar: React.FC = () => {
               </Link>
             ))}
             
-            <InstallAppButton variant="nav" />
-            
             <Link to="/login" className="px-4 py-2 lg:px-5 lg:py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-full hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100">
               Admin
             </Link>
@@ -228,10 +225,6 @@ const Navbar: React.FC = () => {
               <span className="font-medium">{link.name}</span>
             </Link>
           ))}
-          
-          <div className="pt-2">
-            <InstallAppButton variant="mobile" onClickAction={() => setIsOpen(false)} />
-          </div>
           
           <Link 
             to="/login"
@@ -321,7 +314,6 @@ const Footer: React.FC = () => {
           <div className="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-2">
             <Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link to="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</Link>
-            <InstallAppButton variant="footer" />
           </div>
         </div>
       </div>
@@ -533,8 +525,6 @@ export default function App() {
           </Routes>
         </main>
         <Footer />
-        <InstallAppBanner />
-        <DownloadingOverlay />
       </div>
     </Router>
   );
